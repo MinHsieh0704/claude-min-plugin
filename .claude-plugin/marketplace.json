@@ -1,5 +1,6 @@
 {
   "name": "min-plugins",
+  "description": "Min.Hsieh's personal Claude Code plugins — coding discipline, commit attribution, and git worktree workflow",
   "owner": {
     "name": "Min.Hsieh"
   },
