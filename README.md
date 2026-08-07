@@ -33,7 +33,7 @@ Both are asked at enable time and can be changed later in `/plugin`.
 | Option | Default | Effect |
 |---|---|---|
 | **Confirm before git commit** | on | Any Bash or PowerShell call containing `git commit` requires explicit confirmation first. |
-| **Reply in Traditional Chinese** | off | Claude replies in zh-Hant. Code, commands, identifiers, and commit messages stay in their original language. |
+| **Reply in Traditional Chinese** | on | Claude replies in zh-Hant. Code, commands, identifiers, and commit messages stay in their original language. |
 
 The coding-guidelines summary is injected unconditionally and has no option —
 disable the plugin if you do not want it. It costs roughly 200 tokens per

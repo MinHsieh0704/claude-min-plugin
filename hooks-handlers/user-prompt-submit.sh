@@ -3,7 +3,7 @@
 # UserPromptSubmit handler — ask Claude to reply in Traditional Chinese.
 #
 # Gated on the plugin's `reply_zh_hant` userConfig option, which defaults to
-# false. Claude Code exports every userConfig value to hook processes as
+# true. Claude Code exports every userConfig value to hook processes as
 # CLAUDE_PLUGIN_OPTION_<KEY> with the key uppercased.
 #
 # The value cannot be interpolated into the hook command itself: shell-form
@@ -11,7 +11,7 @@
 # value would then be handed to the shell to execute. Reading the environment
 # variable here is the supported path.
 
-if [ "${CLAUDE_PLUGIN_OPTION_REPLY_ZH_HANT:-false}" != "true" ]; then
+if [ "${CLAUDE_PLUGIN_OPTION_REPLY_ZH_HANT:-true}" != "true" ]; then
   exit 0
 fi
 

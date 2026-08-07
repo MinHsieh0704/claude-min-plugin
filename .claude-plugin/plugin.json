@@ -20,7 +20,7 @@
       "type": "boolean",
       "title": "Reply in Traditional Chinese",
       "description": "Claude replies in Traditional Chinese (zh-Hant). Code, commands, identifiers, and commit messages stay in their original language.",
-      "default": false
+      "default": true
     },
     "commit_gate": {
       "type": "boolean",
