@@ -7,7 +7,7 @@ worktree merge helper.
 ## Install
 
 ```
-/plugin marketplace add <owner>/<repo>
+/plugin marketplace add MinHsieh0704/claude-min-plugin
 /plugin install claude-min-plugin@min-plugins
 ```
 

@@ -2,14 +2,16 @@
   "name": "min-plugins",
   "description": "Min.Hsieh's personal Claude Code plugins — coding discipline, commit attribution, and git worktree workflow",
   "owner": {
-    "name": "Min.Hsieh"
+    "name": "Min.Hsieh",
+    "url": "https://github.com/MinHsieh0704"
   },
   "plugins": [
     {
       "name": "claude-min-plugin",
       "source": "./",
       "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
-      "category": "development"
+      "category": "development",
+      "homepage": "https://github.com/MinHsieh0704/claude-min-plugin"
     }
   ]
 }

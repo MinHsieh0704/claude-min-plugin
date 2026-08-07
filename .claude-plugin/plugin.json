@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
   "author": {
-    "name": "Min.Hsieh"
+    "name": "Min.Hsieh",
+    "url": "https://github.com/MinHsieh0704"
   },
+  "repository": "https://github.com/MinHsieh0704/claude-min-plugin",
   "license": "MIT",
   "keywords": [
     "coding-guidelines",
