@@ -1,0 +1,30 @@
+{
+  "name": "claude-min-plugin",
+  "version": "0.1.0",
+  "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
+  "author": {
+    "name": "Min.Hsieh"
+  },
+  "license": "MIT",
+  "keywords": [
+    "coding-guidelines",
+    "git-workflow",
+    "conventional-commits",
+    "ai-attribution",
+    "worktree"
+  ],
+  "userConfig": {
+    "reply_zh_hant": {
+      "type": "boolean",
+      "title": "Reply in Traditional Chinese",
+      "description": "Claude replies in Traditional Chinese (zh-Hant). Code, commands, identifiers, and commit messages stay in their original language.",
+      "default": false
+    },
+    "commit_gate": {
+      "type": "boolean",
+      "title": "Confirm before git commit",
+      "description": "Ask for explicit confirmation before any git commit runs, so commits are never created without you seeing them first.",
+      "default": true
+    }
+  }
+}

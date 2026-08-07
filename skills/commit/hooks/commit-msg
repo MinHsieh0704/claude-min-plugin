@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# commit-msg hook — enforce AI-attribution / fix-linkage conventions.
+#
+# Install (per repo):
+#   mkdir -p .githooks
+#   cp commit-msg .githooks/commit-msg
+#   chmod +x .githooks/commit-msg
+#   git config core.hooksPath .githooks
+#
+# Rule: any commit whose subject's type is "fix" (Conventional Commits
+# style: `fix: description`, optionally `fix(scope): description`) must
+# carry a Fixes: <sha-or-unknown> trailer. This is the linkage that lets
+# later tooling answer "which commit introduced the code this fix
+# touches, and was that commit AI- or human-authored".
+#
+# NOTE ON THE WORD LIST: the commit skill only ever generates the
+# Conventional Commits type "fix" (see SKILL.md) — one canonical word
+# behind the colon, so grep/log queries and commitlint-style tooling
+# stay reliable. This hook's detection is deliberately broader than
+# that single word, for two reasons:
+#   1. Commits typed by hand bypass the skill entirely and may use a
+#      synonym instead of the standard type.
+#   2. History predating this convention used the old bare
+#      verb-first style with no colon at all — those commits still
+#      need to be caught, so this hook falls back to checking the
+#      first word when there's no `type:` prefix.
+# This is still a closed word list, though, and closed lists are
+# inherently incomplete — a commit using a verb outside this list
+# (e.g. "repair", "address", "workaround") will slip past undetected.
+# That gap is a known, accepted limitation, not an oversight.
+#
+# Rationale for why this is enforced by a hook instead of inferred
+# automatically via git blame / SZZ: see ../references/ai-attribution-proposal.md.
+
+set -euo pipefail
+
+COMMIT_MSG_FILE="$1"
+SUBJECT="$(head -n1 "$COMMIT_MSG_FILE")"
+
+# Prefer the Conventional Commits `type:` / `type(scope):` / `type!:` prefix;
+# fall back to the legacy bare first-word style if no colon prefix is found.
+if [[ "$SUBJECT" =~ ^([A-Za-z]+)(\([^\)]*\))?!?:[[:space:]] ]]; then
+  TYPE="$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
+else
+  TYPE="$(echo "$SUBJECT" | awk '{print tolower($1)}')"
+fi
+
+is_fix_commit=false
+case "$TYPE" in
+  fix|fixes|fixed|correct|corrects|corrected|resolve|resolves|resolved|patch|patches|patched|hotfix|bugfix)
+    is_fix_commit=true
+    ;;
+esac
+
+if [ "$is_fix_commit" = true ]; then
+  if ! grep -qE '^Fixes: (unknown|[0-9a-f]{7,40})$' "$COMMIT_MSG_FILE"; then
+    echo "ERROR: this looks like a fix commit (type/verb '$TYPE')," >&2
+    echo "       but no 'Fixes: <sha>' or 'Fixes: unknown' trailer was found." >&2
+    echo "" >&2
+    echo "       Add a blank line then one of:" >&2
+    echo "         Fixes: <short-sha-of-the-commit-that-introduced-this-bug>" >&2
+    echo "         Fixes: unknown   (if git blame gave no clear single candidate)" >&2
+    exit 1
+  fi
+fi
+
+# Optional consistency check: if an AI trailer is present, require the
+# contribution-level trailer alongside it (warning only, not blocking —
+# this is a self-reported judgment call, not something a hook can verify).
+if grep -qE '^Co-Authored-By: Claude ' "$COMMIT_MSG_FILE"; then
+  if ! grep -qE '^AI-Contribution: (assisted|generated)$' "$COMMIT_MSG_FILE"; then
+    echo "WARNING: Co-Authored-By: Claude present without an AI-Contribution: trailer." >&2
+    echo "         Consider adding 'AI-Contribution: assisted' or 'AI-Contribution: generated'." >&2
+  fi
+fi
+
+# Fixes-Candidates: is supplementary metadata for manual triage — it must
+# only ever accompany an honest "Fixes: unknown", never stand alone and
+# never coexist with a confirmed sha (that would claim both "we know" and
+# "we don't know" at once).
+if grep -qE '^Fixes-Candidates: ' "$COMMIT_MSG_FILE"; then
+  if ! grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE"; then
+    echo "ERROR: 'Fixes-Candidates:' present without 'Fixes: unknown'." >&2
+    echo "       Fixes-Candidates only makes sense alongside an honest 'unknown' —" >&2
+    echo "       if you have a confirmed single sha, use 'Fixes: <sha>' instead and drop Fixes-Candidates." >&2
+    exit 1
+  fi
+fi
+
+# Fixes: unknown and a confirmed Fixes: <sha> must never coexist in the
+# same commit — that would claim both "we don't know" and "we do know"
+# at once. Each Fixes: line is independently confirmed, or the whole
+# commit is honestly unknown; there's no partial-unknown state.
+if grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE" && grep -qE '^Fixes: [0-9a-f]{7,40}$' "$COMMIT_MSG_FILE"; then
+  echo "ERROR: 'Fixes: unknown' and a confirmed 'Fixes: <sha>' both present." >&2
+  echo "       These are contradictory — either every hunk traces to a" >&2
+  echo "       confirmed origin (drop the 'unknown' line), or the commit is" >&2
+  echo "       genuinely unresolved (drop the confirmed sha line; use" >&2
+  echo "       Fixes-Candidates instead if you have leads worth recording)." >&2
+  exit 1
+fi
+
+exit 0

@@ -1,0 +1,37 @@
+{
+  "description": "claude-min-plugin: coding-guidelines injection (always on), plus a reply-language hook and a git-commit confirmation gate, both controlled by the plugin's userConfig options",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/user-prompt-submit.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/pre-tool-use-bash.sh\"",
+            "statusMessage": "Checking commit policy..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "min-plugins",
+  "owner": {
+    "name": "Min.Hsieh"
+  },
+  "plugins": [
+    {
+      "name": "claude-min-plugin",
+      "source": "./",
+      "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
+      "category": "development"
+    }
+  ]
+}
