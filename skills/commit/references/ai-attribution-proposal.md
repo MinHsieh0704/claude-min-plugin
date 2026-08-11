@@ -122,8 +122,11 @@ Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
   mkdir -p .githooks
   cp commit-msg .githooks/commit-msg
   chmod +x .githooks/commit-msg
-  git config core.hooksPath .githooks
+  git config core.hooksPath \
+    "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.githooks"
   ```
+  **`core.hooksPath` 必須是絕對路徑，而且要錨定在 main checkout。** `.githooks/` 刻意不進版控（repo 裡多一份 hook 副本就會跟正本各自漂移），所以相對路徑會以「git 當下所在的工作樹」為基準解析——在 linked worktree 裡就是那個 worktree 自己的根目錄，那裡沒有這個目錄，git 於是**不執行任何 hook 也不報錯**。用 `--git-common-dir` 而非 `--show-toplevel` 是因為 `core.hooksPath` 存在共用的 config 裡：從 worktree 內用 `--show-toplevel` 算出的路徑，會把所有 worktree 連同 main checkout 一起釘死在「該 worktree 被刪除後就消失」的目錄上。剩下的暴露面是搬移或改名 repo，同樣會靜默失效——但那是罕見的一次性事件，不像相對路徑形式從 worktree 建立的第一刻就是壞的。
+- **版本標記與自動升級**：hook 檔頭有 `# hook-version: <n>`，只在**強制行為**變動時才遞增（純註解修改不遞增）。commit skill 每次 commit 都會比對已安裝副本的版本，較舊就用套件內的正本覆寫；版本相同即使檔案有差異也不動它——那代表是本地有意的修改，不是過期。skill 也只用檔頭那句 `AI-attribution / fix-linkage conventions` 來認定「這是不是我們的 hook」，所以早於版本標記存在的舊副本仍會被認出來（視為 version 0），不會被誤判成別人的 hook 而不敢動。
 - **既有規則維持不變**：不 `--no-verify`、不 amend 既有 commit、commit 後不自動 push——這些原則同時也讓 hook 的強制力不會被繞過或事後竄改。
 
 ### 1.7 skill 端配合
@@ -179,7 +182,7 @@ python3 ai_attribution_stats.py --path src/auth/token.js
 2. **`git blame` 判斷本身有失準率**：學術研究顯示 SZZ 演算法（bug-introducing commit 追溯的基礎方法）在不同資料集上有約 25%–40% 的案例無法單靠 blame 正確追溯（ghost commit、跨檔案變更、格式化雜訊等原因）。這也是為何規範要求判斷不出來時**明寫 `unknown`**而非省略或瞎猜——把不確定性攤在檯面上，而不是藏進「已解決」的統計裡。
 3. **`AI-Contribution` 是自陳（self-reported），無法被 hook 驗證**：如果協作過程中判斷失準或有意美化，統計數字會失真。這是設計上的取捨——比起自動判定的高失準率，自陳雖然主觀但至少誠實可控。
 4. **原始 commit 計數仍可能重複**：`git revert` 預設會複製原 commit 訊息（含 trailer）；cherry-pick 到多分支會產生新 hash 但相同內容；squash merge 又會反過來把多個子 commit 合併成 1 個。**這些狀況只影響「2.1 整體歸屬統計」，不影響「2.2 修復鏈路交叉表」**——因為後者是以具體 commit 對之間的因果關係為單位，不是靠計數。
-5. **hook 只在本地生效**：`core.hooksPath` 是每個工作目錄各自的 git 設定，新 clone 的人若沒有手動執行安裝步驟，hook 不會生效；用 `--no-verify` 也能繞過（規範上禁止，但技術上擋不住）。
+5. **hook 只在本地生效**：`core.hooksPath` 是每個 clone 各自的本機設定，不隨 repo 散佈（同一個 clone 底下的所有 worktree 則共用同一份，見 1.6），新 clone 的人若沒有手動執行安裝步驟，hook 不會生效；用 `--no-verify` 也能繞過（規範上禁止，但技術上擋不住）。
 
 ---
 
