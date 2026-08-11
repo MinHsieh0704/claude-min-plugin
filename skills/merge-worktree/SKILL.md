@@ -13,7 +13,7 @@ worktree session (the one EnterWorktree switched you into).
 
 1. Gather state — do not assume branch names or paths:
    - `git worktree list` → find the **main checkout path** (the non-worktree entry) and the
-     **worktree** you are in.
+     **worktree path** you are in (step 8 needs it).
    - `git branch -vv` → note the **worktree branch** (current, marked `*`) and the **target
      branch** checked out in the main checkout (e.g. `master` or `main` — detect it, never hardcode).
 2. The worktree work must be committed first. If `git status` in the worktree is dirty, commit it
@@ -21,22 +21,33 @@ worktree session (the one EnterWorktree switched you into).
 3. Confirm it is a clean fast-forward: the worktree branch must be the target branch plus the new
    commits on top (target is an ancestor). If the branches have diverged so `--ff-only` cannot
    apply, **stop and report** — do not create a merge commit or rebase without asking.
-4. Protect the main checkout: `git -C <main-path> status -s`. If it has uncommitted or untracked
-   files that the merge would overwrite, **stop and report** — never clobber main-tree changes.
-   (The worktree directory itself showing as untracked, e.g. `.claude/worktrees/`, is normal.)
-5. Fast-forward merge into the target branch from the main checkout:
+4. Leave the worktree with the **ExitWorktree** tool, `action: "keep"` — the worktree directory and
+   its branch stay on disk, and the session returns to the main checkout.
+   - **This has to happen before the merge, not after.** A session that EnterWorktree isolated in a
+     worktree is refused any `git -C <main-path>` redirect back to the shared checkout, so the
+     merge cannot be driven from inside the worktree at all. Leaving first is what makes steps 5-8
+     plain, un-redirected git.
+   - `keep`, never `remove`: until step 6 lands them, the commits exist only on the worktree
+     branch, and `remove` would delete that branch along with the directory.
+5. Protect the main checkout: `git status -s`. If it has uncommitted or untracked files that the
+   merge would overwrite, **stop and report** — never clobber main-tree changes. (The untracked
+   entry covering the worktree directory — `.claude/` or `.claude/worktrees/` — is normal.)
+6. Fast-forward merge into the target branch:
    ```
-   git -C <main-path> merge --ff-only <worktree-branch>
+   git merge --ff-only <worktree-branch>
    ```
-6. Verify the merge: `git -C <main-path> log --oneline -2` shows the worktree commit(s) now on the
-   target branch.
-7. Remove the worktree with the **ExitWorktree** tool, `action: "remove"`.
-   - It will refuse the first time, warning "N commit(s) on <branch>". This is **expected** — those
-     commits are already on the target branch from step 5, so nothing is lost. Re-invoke with
-     `discard_changes: true`; this discards only the now-redundant branch ref and the worktree
-     directory (ExitWorktree deletes both — no separate `git branch -d` needed).
-8. Verify cleanup from the main checkout: `git worktree list` (only the main entry remains),
-   `git branch` (worktree branch gone), the merged files are present, and `git status` is clean.
+7. Verify the merge: `git log --oneline -2` shows the worktree commit(s) now on the target branch.
+8. Remove the worktree and its branch:
+   ```
+   git worktree remove <worktree-path>
+   git branch -d <worktree-branch>
+   ```
+   - ExitWorktree is not the tool for this any more — after step 4 it is a no-op for this worktree.
+   - **`-d`, never `-D`.** `-d` refuses to delete a branch whose commits aren't merged, so it
+     re-checks step 7 rather than trusting it.
+   - ExitWorktree releases the worktree's lock on the way out, so `remove` needs no `--force`.
+9. Verify cleanup: `git worktree list` (only the main entry remains), `git branch` (worktree branch
+   gone), the merged files are present, and `git status` is clean.
 
 ## Rules
 
@@ -47,8 +58,8 @@ worktree session (the one EnterWorktree switched you into).
 - **Never clobber the main checkout.** If it has conflicting uncommitted/untracked changes, stop
   before merging.
 - **Do not push.** Stop after the merge and cleanup.
-- The ExitWorktree "N commits will be discarded" warning is only safe to override with
-  `discard_changes: true` **after** step 6 confirms those commits are on the target branch. If the
-  merge did not happen, do not discard.
-- Run this from inside the worktree session created by EnterWorktree; ExitWorktree only acts on
-  worktrees it created in the current session.
+- **Never `git branch -D` here.** If `-d` refuses, the merge in step 6 did not land — find out why
+  instead of forcing the delete.
+- Start this from inside the worktree session created by EnterWorktree: step 4's ExitWorktree only
+  acts on a worktree it created in the current session, so a session that was never in one has
+  nothing for this skill to land.

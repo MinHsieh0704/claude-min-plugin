@@ -16,8 +16,9 @@
 # The tokens in between are what a literal "git commit" match missed: git's
 # global options sit there, so `git -C <path> commit` and `git --no-pager
 # commit` slipped through the gate entirely, as did `git  commit` with two
-# spaces. `-C` is not exotic here — this plugin's own merge-worktree skill
-# drives the main checkout with `git -C <main-path> ...` throughout.
+# spaces. `-C` is not exotic — it is the ordinary way to drive a repo from
+# outside its working directory, which any worktree- or CI-shaped workflow
+# reaches for sooner or later.
 #
 # The match is scoped to `command` rather than the whole payload because the
 # PreToolUse input also carries `description`, `cwd`, and `transcript_path`. A
