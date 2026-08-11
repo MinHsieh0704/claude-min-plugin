@@ -37,7 +37,7 @@ Both are asked at enable time and can be changed later in `/plugin`.
 
 The coding-guidelines summary is injected unconditionally and has no option —
 disable the plugin if you do not want it. It costs roughly 200 tokens per
-session; the full 171-line text is loaded only when the skill is invoked.
+session; the full 176-line text is loaded only when the skill is invoked.
 
 ## The commit convention
 
@@ -46,7 +46,7 @@ session; the full 171-line text is loaded only when the skill is invoked.
 ```
 fix: correct server version comparison
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 AI-Contribution: generated
 Fixes: a1b2c3d
 ```

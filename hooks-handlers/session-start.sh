@@ -7,7 +7,7 @@
 # those headings change, regenerate this string — nothing checks the two for
 # drift automatically.
 #
-# The full 171-line text deliberately stays out of every session's context
+# The full 176-line text deliberately stays out of every session's context
 # (~1.5k tokens); Claude reads it on demand via /claude-min-plugin:coding-guidelines.
 #
 # Always on: this handler takes no userConfig gate. A user who does not want

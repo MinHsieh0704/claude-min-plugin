@@ -29,7 +29,7 @@ Stage and commit the current changes without asking for confirmation — as one 
      - `build` / `ci` — build system or CI pipeline changes
    - No scope for now (`feat(auth): ...`) — the team uses the `Fixes:` trailer chain for cross-commit linkage instead of scope-based grouping (see 1.1 in the proposal doc); scope remains a compatible option to add later if ever needed, it isn't precluded by this format.
    - **The subject must stay a single line, no matter how large or multi-part the diff is.** This isn't just a style preference: the hook's type-extraction and the stats script's trailer regexes both assume line 1 is the subject and every trailer starts on its own line after a blank line. A subject that wraps onto a second line silently breaks both. If a change is too complex for one honest line, that's a signal to split into multiple commits (see the splitting rule below), not to write a longer or multi-line subject. No prose body, no bullet list, either way.
-   - Trailer 1 (always, when this commit's content came from Claude): a blank line, then `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, where `<model>` is the model currently in use (e.g. `Claude Opus 4.8`). Use the actual model running this session, not a hardcoded version.
+   - Trailer 1 (always, when this commit's content came from Claude): a blank line, then `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, where `<model>` is the model currently in use (e.g. `Claude Opus 5`). Use the actual model running this session, not a hardcoded version.
    - Trailer 2 (always, alongside Trailer 1): `AI-Contribution: assisted` or `AI-Contribution: generated`.
      - `assisted` — Claude proposed snippets/suggestions but the human directed the exact lines, or the change is minor (typo, formatting, small tweak) with AI help.
      - `generated` — Claude authored the primary implementation logic of this diff end-to-end; the human reviewed and requested the commit.
@@ -46,7 +46,7 @@ Stage and commit the current changes without asking for confirmation — as one 
    git commit -m "$(cat <<'EOF'
    fix: correct server version comparison
 
-   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+   Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
    AI-Contribution: generated
    Fixes: a1b2c3d
    EOF
