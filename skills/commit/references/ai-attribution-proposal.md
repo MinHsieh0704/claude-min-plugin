@@ -55,9 +55,9 @@ Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
 這點沒有新增 trailer，而是延伸既有規則，原因說明如下：
 
 - **`AI-Contribution` 永遠只看「這次 commit 自己的 diff」，不繼承、不累加**。功能原本是 AI `generated`，後續某次更新是人類自己寫的，這次更新就標 `----`（無 AI trailer）；下次又是 AI 協助，就標 `assisted` 或 `generated`。不去計算「這個功能整體有幾成是 AI 寫的」這種累積分數——那需要逐行追蹤程式碼存活狀況（哪些行還留著、哪些行被誰的哪次改動取代），本質上就是先前已經排除的行級別歸屬問題，複雜度與失準率都不划算。
-- **「更新／擴充功能」不等於「修復」，不需要 `Fixes:`**。`Fixes:` 語意上專指「這裡曾經是壞的，這次修好了」；單純加新能力、擴充邏輯，即使改到的是 AI 寫的程式碼，也不是修復，維持現有 hook 以 type 判斷（見 1.1.2 的偵測清單）即可，不需要额外規則。
+- **「更新／擴充功能」不等於「修復」，不需要 `Fixes:`**。`Fixes:` 語意上專指「這裡曾經是壞的，這次修好了」；單純加新能力、擴充邏輯，即使改到的是 AI 寫的程式碼，也不是修復，維持現有 hook 以 type 判斷（見 1.1.2 的偵測清單）即可，不需要額外規則。
 - **灰色地帶：掛著「feat」外皮的修復**。如果一次「feat」其實是在修正先前（可能是 AI 寫的）設計缺陷，而不是單純擴充，應該讓 subject type 誠實反映（改用 `fix`），或至少手動加上 `Fixes:`。Hook 的 type 偵測是**最低要求**，不是上限——鼓勵在這類灰色地帶主動補標，而不是靠選字來規避 `Fixes:` 的要求。
-- **想看功能隨時間的完整演進，不需要新 trailer**：`ai_attribution_stats.py --path <file-or-dir>` 直接用 `git log --follow` 把某個檔案/模組的所有 commit 按時間排出來，附上各自的 `AI-Contribution` 與 `Fixes` 標記，就能看到一個功能從 AI 主導、到人類更新、到後續修復的完整時間軸,不需要為此另外設計 lineage trailer。
+- **想看功能隨時間的完整演進，不需要新 trailer**：`ai_attribution_stats.py --path <file-or-dir>` 直接用 `git log --follow` 把某個檔案/模組的所有 commit 按時間排出來，附上各自的 `AI-Contribution` 與 `Fixes` 標記，就能看到一個功能從 AI 主導、到人類更新、到後續修復的完整時間軸，不需要為此另外設計 lineage trailer。
 
 ### 1.3 Subject 格式細節
 
