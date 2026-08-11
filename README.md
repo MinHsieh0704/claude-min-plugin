@@ -36,7 +36,7 @@ Both are asked at enable time and can be changed later in `/plugin`.
 | **Reply in Traditional Chinese** | on | Claude replies in zh-Hant. Code, commands, identifiers, and commit messages stay in their original language. |
 
 The coding-guidelines summary is injected unconditionally and has no option —
-disable the plugin if you do not want it. It costs roughly 200 tokens per
+disable the plugin if you do not want it. It costs roughly 400 tokens per
 session; the full 176-line text is loaded only when the skill is invoked.
 
 ## The commit convention
@@ -59,7 +59,9 @@ optional `Fixes-Candidates:` list when git blame is inconclusive.
 The skill offers to install `skills/commit/hooks/commit-msg` into your repo as a
 git `commit-msg` hook (via `core.hooksPath`), which rejects a `fix` commit with no
 `Fixes:` trailer and warns when `Co-Authored-By: Claude` appears without
-`AI-Contribution`. It never overwrites an existing hook setup.
+`AI-Contribution`. It never touches a `commit-msg` hook that isn't this
+convention's own; its own copies it keeps current, upgrading an outdated install
+in place via the `hook-version` marker in the file header.
 
 `skills/commit/scripts/ai_attribution_stats.py` reports overall attribution and a
 fix-linkage table from those trailers. Design rationale and known limitations:
