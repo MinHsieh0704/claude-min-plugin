@@ -136,6 +136,8 @@ def main():
     path = None
     if "--path" in args:
         idx = args.index("--path")
+        if idx + 1 >= len(args):
+            sys.exit("error: --path needs a file or directory argument")
         path = args[idx + 1]
         del args[idx:idx + 2]
     rev_range = args[0] if args else None
@@ -147,6 +149,12 @@ def main():
         return
 
     total = len(commits)
+    if not total:
+        # Every table below reduces to zeros for an empty range, which reads as
+        # a real result rather than an empty one. Say so and stop.
+        print(f"No commits in {rev_range or 'this branch'} — nothing to report.")
+        return
+
     ai_count = sum(1 for c in commits.values() if c["is_ai"])
     level_counts = defaultdict(int)
     for c in commits.values():
@@ -155,7 +163,7 @@ def main():
 
     print("=== Overall attribution ===")
     print(f"Total commits:            {total}")
-    print(f"AI-touched (Co-Authored-By): {ai_count} ({ai_count / total:.0%})" if total else "no commits")
+    print(f"AI-touched (Co-Authored-By): {ai_count} ({ai_count / total:.0%})")
     print(f"  AI-Contribution: assisted:  {level_counts['assisted']}")
     print(f"  AI-Contribution: generated: {level_counts['generated']}")
     untagged_ai = ai_count - level_counts["assisted"] - level_counts["generated"]
