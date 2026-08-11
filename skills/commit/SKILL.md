@@ -50,6 +50,12 @@ Stage and commit the current changes without asking for confirmation — as one 
      - If this commit genuinely repairs more than one distinct prior origin (each hunk confidently traces to its own, different commit), write a separate `Fixes: <short-sha>` line per origin — this trailer key may repeat, same as `Co-authored-by` can.
      - If ANY hunk's blame is inconclusive (multiple candidates, no prior history, or otherwise unclear), do not guess and do not partially confirm the others — write `Fixes: unknown` for the whole commit, plus `Fixes-Candidates: <sha1>,<sha2>,...` listing whatever candidates blame did surface (comma-separated, no spaces), so a human can triage later. Never write `Fixes-Candidates:` without `Fixes: unknown` alongside it, and never omit the `Fixes:` trailer entirely.
      - This heuristic misses roughly a quarter to two-fifths of true origin commits per published SZZ-algorithm research — treat any resolved SHA as a lead for the reviewer, not a proven fact, and never fabricate one.
+   - Trailer 4 (only when the caller supplied an internal tracker number for this invocation): `Refs: <id>`, placed last — after `Fixes:` / `Fixes-Candidates:`.
+     - The number comes **only** from what the caller gave this invocation: the arguments the skill was invoked with (`/claude-min-plugin:commit BUG-1234`), or a number stated outright in the request that triggered it. Never derive one from the branch name, the diff, code comments, or earlier turns, and never ask for one — no number supplied is a normal outcome rather than a missing input, and the commit simply carries no `Refs:` line.
+     - Write each number exactly as the caller wrote it: don't change its case, don't add or strip a prefix, don't reformat it. Several numbers repeat the key, one per line, in the order given — the same repeatable-trailer convention `Fixes:` already uses.
+     - `Refs:` and `Fixes:` are different axes and coexist on one commit: `Fixes:` points at the commit that introduced a bug, `Refs:` points at the tracker item this work belongs to. Never put a tracker number in `Fixes:`, and never put a sha in `Refs:`.
+     - When step 3 splits the diff, every commit from this invocation carries the same `Refs:` line(s). The skill has no basis for deciding which number belongs to which group, and guessing would record a linkage nobody stated.
+     - The `commit-msg` hook does not check this trailer at all — that hook ships to every repo installing this plugin, and a tracker's numbering scheme is one company's internal convention, so enforcing it there would impose that convention on everyone. Nothing will catch a mistyped number: copy it, don't retype it from memory.
 5. Commit with a HEREDOC so the blank line before the trailers is preserved:
 
    ```
@@ -59,13 +65,14 @@ Stage and commit the current changes without asking for confirmation — as one 
    Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
    AI-Contribution: generated
    Fixes: a1b2c3d
+   Refs: BUG-1234
    EOF
    )"
    ```
 
    Omit whichever trailers don't apply (e.g. a non-fix commit has no `Fixes:` line; a commit with no Claude-authored content has neither AI trailer).
 
-6. Show the result with `git log -1` (full form, not `--oneline`) — the whole point of the trailer convention is to make `AI-Contribution`/`Fixes` visible, and `--oneline` hides them. If step 3 produced more than one commit (see splitting rule below), show `git log -1` for each in the order they were created.
+6. Show the result with `git log -1` (full form, not `--oneline`) — the whole point of the trailer convention is to make `AI-Contribution`/`Fixes` visible, and `--oneline` hides them. If step 3 produced more than one commit (see splitting rule below), show `git log -1` for each in the order they were created, and if a `Refs:` number ended up on more than one of them, say so once.
 
 ## Rules
 

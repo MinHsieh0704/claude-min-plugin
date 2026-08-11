@@ -23,7 +23,7 @@ claude --plugin-dir /path/to/this/repo
 | Skill | What it does |
 |---|---|
 | `/claude-min-plugin:coding-guidelines` | Ten guidelines covering assumptions, scope creep, security, dependencies, regressions, and error handling. A condensed version is injected into every session; this skill has the full text with rationale and examples. |
-| `/claude-min-plugin:commit` | Stages and commits without asking, generating a Conventional Commits subject plus `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailers. Splits into multiple commits when one set of trailers cannot describe the diff honestly. |
+| `/claude-min-plugin:commit` | Stages and commits without asking, generating a Conventional Commits subject plus `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailers, and a `Refs:` trailer when you pass it a tracker number. Splits into multiple commits when one set of trailers cannot describe the diff honestly. |
 | `/claude-min-plugin:merge-worktree` | Fast-forwards the current worktree's branch into the main checkout, then removes the worktree and its branch. |
 
 ## Options
@@ -41,7 +41,7 @@ session; the full 176-line text is loaded only when the skill is invoked.
 
 ## The commit convention
 
-`/claude-min-plugin:commit` writes three trailers:
+`/claude-min-plugin:commit` writes up to four trailers:
 
 ```
 fix: correct server version comparison
@@ -49,12 +49,21 @@ fix: correct server version comparison
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 AI-Contribution: generated
 Fixes: a1b2c3d
+Refs: BUG-1234
 ```
 
 `AI-Contribution` is `assisted` or `generated`, judged from what actually
 happened in the session rather than diff size. `Fixes:` appears on `fix` commits
 and points at the commit that introduced the problem, or `Fixes: unknown` with an
 optional `Fixes-Candidates:` list when git blame is inconclusive.
+
+`Refs:` records an issue number from whatever tracker your team uses, and appears
+only when you pass one in — `/claude-min-plugin:commit BUG-1234`, repeat the
+trailer for several numbers. It is never inferred from a branch name or a diff
+and never prompted for, so a commit made without a number simply has no `Refs:`
+line. The `commit-msg` hook does not check it either: that hook reaches every
+repo installing this plugin, and an issue-numbering scheme is a house convention,
+not something to enforce on everyone. Nothing catches a mistyped number.
 
 The skill installs `skills/commit/hooks/commit-msg` into your repo as a git
 `commit-msg` hook (via `core.hooksPath`) without asking, which rejects a `fix` commit with no

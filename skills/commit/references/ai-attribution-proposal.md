@@ -18,6 +18,7 @@ AI-Contribution: assisted | generated
 Fixes: <short-sha>            (可重複出現，見 1.1.1)
 Fixes: unknown
 Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
+Refs: <內部單號>              (可重複出現，固定放在最後，見 1.1.3)
 ```
 
 | Trailer | 何時必填 | 說明 |
@@ -27,6 +28,7 @@ Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
 | `Fixes: <sha>` | subject type 為 `fix` 時（skill 只用這個字，見 1.1.2），且能唯一確認起源 commit | 標明這次修復對應到哪個 commit 引入的問題；同一個 commit 若真的同時修復多個不同起源的問題，可重複這行（見 1.1.1） |
 | `Fixes: unknown` | 同上，但無法唯一確認起源 commit | 誠實標記「不確定」，不准省略、不准瞎猜 |
 | `Fixes-Candidates: <sha1>,<sha2>` | 只能伴隨 `Fixes: unknown` 一起出現 | 把 `git blame` 找到的多個候選都列出來，供人工事後判斷，見 1.1.1 |
+| `Refs: <內部單號>` | 呼叫 commit skill 時有明講內部單號 | 對應公司內部 bug/suggestion 追蹤單號；可重複多行，一行一個，原樣照抄。**只吃呼叫時給的參數**——不從分支名或 diff 推斷、也不反問，沒給就不寫這行，見 1.1.3 |
 
 ### 1.1.1 為何用「多個候選都列出來」而非強迫立即指定
 
@@ -49,6 +51,14 @@ Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
 - **仍是已知限制**：這仍然是一份封閉詞表，人工手打 commit 若用清單外的字（例如 `repair`、`address`、`workaround`），`Fixes:` 要求就會被跳過，不會被 hook 攔到。這是關鍵字比對法本質上的侷限，不是遺漏——目前選擇接受這個殘餘風險，而非做語意分析。
 
 `AI-Contribution` 的判斷基準是**當下實際發生的協作過程**，不是單純看 diff 行數多寡——一個 3 行的關鍵演算法修正若是 AI 端到端寫的，仍算 `generated`；一個 50 行的樣板程式碼若是人類抄範本、AI 只是順手排版，仍算 `assisted`。
+
+### 1.1.3 內部單號為何用獨立的 `Refs:`，且不納入 hook 強制
+
+- **不沿用 `Fixes:`**：`Fixes:` 的語意是「引入這個 bug 的那個 commit 的 sha」，hook 與統計腳本都以 `^Fixes: (unknown|[0-9a-f]{7,40})$` 解析它。把追蹤單號塞進去會同時破壞 hook 驗證與 2.2 的修復鏈路交叉表。這兩者本來就是不同軸線——「哪個 commit 弄壞的」與「這次工作對應哪張單」——所以並存於同一個 commit 是正常狀態，不是重複。
+- **不用 `Closes:` / `Resolves:`**：GitHub、GitLab 都把這幾個字當作 issue 關閉關鍵字處理，用它們會產生非預期的自動關單。`Refs:` 沒有這層平台語意，純粹是引用。
+- **放 trailer 而非塞進 subject**：1.3 的「subject 永遠單行」是硬規則，hook 的 type 抽取與統計腳本的正則全都建立在這個前提上。單號改放 subject 會連帶要改 hook 正則與整套測試；放 trailer 則兩者都不必動。
+- **強制力刻意停在 skill 層**：`commit-msg` hook 會隨這個 plugin 裝進**每一個**採用它的 repo，而單號格式是單一公司的內部慣例。把它寫進共用 hook 等於把公司規則強加給所有使用者，因此 hook 完全不檢查這個 trailer。代價要說清楚：**單號打錯不會有任何東西擋下來**，所以規範是照抄、不要憑印象重打。
+- **不由 skill 推斷、也不反問**：分支名或 diff 內容看起來像單號並不代表就是這次要記的單號，猜錯等於在歷史裡寫下一筆錯誤且無人查核的關聯——比沒有這行更糟。而反問又會打破 commit skill 不中斷的既有原則（同 1.1.1 的理由）。因此只有呼叫當下明講的單號才會被寫入。
 
 ### 1.2 同一功能後續更新時，如何判定
 
@@ -131,7 +141,7 @@ Fixes-Candidates: <sha1>,<sha2>,...   (只能伴隨 Fixes: unknown 出現)
 
 ### 1.7 skill 端配合
 
-`commit` skill（本目錄上一層的 `../SKILL.md`）已更新，會在產生 commit message 時自動判斷並附上以上三種 trailer，並在遇到 hook 擋下時照規則重試而非繞過。
+`commit` skill（本目錄上一層的 `../SKILL.md`）已更新，會在產生 commit message 時自動判斷並附上以上四種 trailer（`Refs:` 除外——那一種不判斷，只照抄呼叫時給的單號，見 1.1.3），並在遇到 hook 擋下時照規則重試而非繞過。
 
 ---
 
