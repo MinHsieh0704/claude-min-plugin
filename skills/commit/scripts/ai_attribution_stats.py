@@ -68,7 +68,13 @@ def load_commits(rev_range, path=None):
         args.append(rev_range)
     if path:
         args.extend(["--", path])
-    raw = run_git(args)
+    try:
+        raw = run_git(args)
+    except subprocess.CalledProcessError as exc:
+        # git already names what it could not resolve (a bad rev range, a
+        # path outside the repo). Pass that through: resolve_short_sha()
+        # relies on run_git raising, so the catch belongs here, not there.
+        sys.exit(f"error: git log failed: {exc.stderr.strip() or exc}")
     commits = {}
     order = []
     for record in raw.split(RECORD_SEP):
@@ -145,6 +151,12 @@ def main():
     commits, order = load_commits(rev_range, path=path)
 
     if path:
+        if not order:
+            # An empty timeline plus the note below reads as "checked, nothing
+            # of note"; the path having no history at all is a different
+            # answer. Say which one it is, same as the empty range does.
+            print(f"No commits touch {path} — nothing to report.")
+            return
         print_timeline(path, commits, order)
         return
 
