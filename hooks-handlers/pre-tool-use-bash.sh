@@ -6,11 +6,18 @@
 # true. See user-prompt-submit.sh for why the value is read from the
 # environment rather than substituted into the hook command.
 #
-# Scope note: this matches the literal text "git commit" within the tool call's
-# `command` only. A command that merely mentions that string — grepping the log
-# for it, say — still trips the prompt. That is deliberate: the failure mode is
-# one extra confirmation, whereas parsing the command precisely enough to avoid
-# it would risk missing a real commit.
+# Scope note: this matches `git`, then any number of whitespace-separated
+# tokens, then `commit`, within the tool call's `command` only. A command that
+# merely mentions that pair — grepping the log for it, say — still trips the
+# prompt. That is deliberate: the failure mode is one extra confirmation,
+# whereas parsing the command precisely enough to avoid it would risk missing a
+# real commit.
+#
+# The tokens in between are what a literal "git commit" match missed: git's
+# global options sit there, so `git -C <path> commit` and `git --no-pager
+# commit` slipped through the gate entirely, as did `git  commit` with two
+# spaces. `-C` is not exotic here — this plugin's own merge-worktree skill
+# drives the main checkout with `git -C <main-path> ...` throughout.
 #
 # The match is scoped to `command` rather than the whole payload because the
 # PreToolUse input also carries `description`, `cwd`, and `transcript_path`. A
@@ -39,7 +46,7 @@ if [ -z "$command" ]; then
   command="$input"
 fi
 
-if printf '%s' "$command" | grep -Fq 'git commit'; then
+if printf '%s' "$command" | grep -Eq 'git[[:space:]]+([^[:space:]]+[[:space:]]+)*commit'; then
   cat << 'EOF'
 {
   "hookSpecificOutput": {

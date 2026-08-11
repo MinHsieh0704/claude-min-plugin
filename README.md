@@ -32,7 +32,7 @@ Both are asked at enable time and can be changed later in `/plugin`.
 
 | Option | Default | Effect |
 |---|---|---|
-| **Confirm before git commit** | on | Any Bash or PowerShell call containing `git commit` requires explicit confirmation first. |
+| **Confirm before git commit** | on | Any Bash or PowerShell call that runs `git commit` requires explicit confirmation first — including forms with global options in between, such as `git -C <path> commit`. |
 | **Reply in Traditional Chinese** | on | Claude replies in zh-Hant. Code, commands, identifiers, and commit messages stay in their original language. |
 
 The coding-guidelines summary is injected unconditionally and has no option —
