@@ -5,7 +5,14 @@
 #   mkdir -p .githooks
 #   cp commit-msg .githooks/commit-msg
 #   chmod +x .githooks/commit-msg
-#   git config core.hooksPath .githooks
+#   git config core.hooksPath \
+#     "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.githooks"
+#
+# The path must be absolute and anchored to the main checkout: .githooks/
+# is untracked, so a relative core.hooksPath resolves against each linked
+# worktree's own root, finds nothing there, and git silently runs no hook.
+# core.hooksPath is shared config, so --git-common-dir (not --show-toplevel)
+# keeps it pointing at the main checkout even when run from a worktree.
 #
 # Rule: any commit whose subject's type is "fix" (Conventional Commits
 # style: `fix: description`, optionally `fix(scope): description`) must
