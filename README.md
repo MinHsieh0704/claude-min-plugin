@@ -56,8 +56,8 @@ happened in the session rather than diff size. `Fixes:` appears on `fix` commits
 and points at the commit that introduced the problem, or `Fixes: unknown` with an
 optional `Fixes-Candidates:` list when git blame is inconclusive.
 
-The skill offers to install `skills/commit/hooks/commit-msg` into your repo as a
-git `commit-msg` hook (via `core.hooksPath`), which rejects a `fix` commit with no
+The skill installs `skills/commit/hooks/commit-msg` into your repo as a git
+`commit-msg` hook (via `core.hooksPath`) without asking, which rejects a `fix` commit with no
 `Fixes:` trailer and warns when `Co-Authored-By: Claude` appears without
 `AI-Contribution`. It never touches a `commit-msg` hook that isn't this
 convention's own; its own copies it keeps current, upgrading an outdated install
