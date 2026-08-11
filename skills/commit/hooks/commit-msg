@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 # commit-msg hook — enforce AI-attribution / fix-linkage conventions.
+# hook-version: 1
+#
+# Bump that number whenever the ENFORCEMENT behaviour below changes. The
+# commit skill compares it against the copy installed in a repo and
+# refreshes anything older; equal versions are left alone even when the
+# files differ, so a comment-only edit must not bump it. The skill also
+# recognises this file as its own by the tagline on the line above —
+# keep that wording intact.
 #
 # Install (per repo):
 #   mkdir -p .githooks
