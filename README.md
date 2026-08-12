@@ -57,11 +57,15 @@ happened in the session rather than diff size. `Fixes:` appears on `fix` commits
 and points at the commit that introduced the problem, or `Fixes: unknown` with an
 optional `Fixes-Candidates:` list when git blame is inconclusive.
 
-`Refs:` records an issue number from whatever tracker your team uses, and appears
-only when you pass one in — `/claude-min-plugin:commit BUG-1234`, repeat the
-trailer for several numbers. It is never inferred from a branch name or a diff
-and never prompted for, so a commit made without a number simply has no `Refs:`
-line. The `commit-msg` hook does not check it either: that hook reaches every
+`Refs:` records an issue number from whatever tracker your team uses. Pass one in
+— `/claude-min-plugin:commit BUG-1234`, repeat the trailer for several numbers —
+and every commit that invocation makes carries it. Pass nothing and you are asked
+once per commit, right before that commit is created, with "no tracker number" as
+the default; each commit keeps its own answer, so putting one number on two
+commits means typing it twice. The number is never inferred from a branch name or
+a diff, and never offered as a guess to click — only what you state gets written,
+and a commit made without one simply has no `Refs:` line. The `commit-msg` hook
+does not check it either: that hook reaches every
 repo installing this plugin, and an issue-numbering scheme is a house convention,
 not something to enforce on everyone. Nothing catches a mistyped number.
 

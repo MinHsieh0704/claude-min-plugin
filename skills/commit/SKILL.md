@@ -50,12 +50,20 @@ Stage and commit the current changes without asking for confirmation — as one 
      - If this commit genuinely repairs more than one distinct prior origin (each hunk confidently traces to its own, different commit), write a separate `Fixes: <short-sha>` line per origin — this trailer key may repeat, same as `Co-authored-by` can.
      - If ANY hunk's blame is inconclusive (multiple candidates, no prior history, or otherwise unclear), do not guess and do not partially confirm the others — write `Fixes: unknown` for the whole commit, plus `Fixes-Candidates: <sha1>,<sha2>,...` listing whatever candidates blame did surface (comma-separated, no spaces), so a human can triage later. Never write `Fixes-Candidates:` without `Fixes: unknown` alongside it, and never omit the `Fixes:` trailer entirely.
      - This heuristic misses roughly a quarter to two-fifths of true origin commits per published SZZ-algorithm research — treat any resolved SHA as a lead for the reviewer, not a proven fact, and never fabricate one.
-   - Trailer 4 (only when the caller supplied an internal tracker number for this invocation): `Refs: <id>`, placed last — after `Fixes:` / `Fixes-Candidates:`.
-     - The number comes **only** from what the caller gave this invocation: the arguments the skill was invoked with (`/claude-min-plugin:commit BUG-1234`), or a number stated outright in the request that triggered it. Never derive one from the branch name, the diff, code comments, or earlier turns, and never ask for one — no number supplied is a normal outcome rather than a missing input, and the commit simply carries no `Refs:` line.
-     - Write each number exactly as the caller wrote it: don't change its case, don't add or strip a prefix, don't reformat it. Several numbers repeat the key, one per line, in the order given — the same repeatable-trailer convention `Fixes:` already uses.
+   - Trailer 4 (only when an internal tracker number was given for this commit): `Refs: <id>`, placed last — after `Fixes:` / `Fixes-Candidates:`.
+     - A number is only ever written from what a human stated outright. There are exactly two sources, in this order:
+       1. **Given at invocation** — the arguments the skill was invoked with (`/claude-min-plugin:commit BUG-1234`), or a number stated in the request that triggered it. Use it and **do not ask**.
+       2. **Nothing given** — ask, once for this commit, with AskUserQuestion: after this commit's subject is settled, before this commit is created.
+     - Never derive a number from the branch name, the diff, code comments, or earlier turns — neither to write one nor to *offer* one in the question. A suggested number is one keystroke from being recorded as fact, which fails exactly the way silently inferring one does.
+     - The question: header `Refs`, and the question text **must quote this commit's subject line** — a split invocation asks several of these in a row, and without the subject there is no telling which commit is being answered for. Two options, the first one default: *no tracker number* (a commit without a `Refs:` line is a normal outcome, not a missing input) and *I have one*, whose description sends the number to the free-text `Other` box so it arrives in a single step. Several numbers in one answer, comma- or space-separated, become one `Refs:` line each.
+     - If the answer comes back as that second option carrying no number, ask again — **once**, never in a loop. If the second round still yields nothing, commit without `Refs:` and say so for that commit instead of passing over it in silence.
+     - When the question cannot be asked at all (a headless or automated run with no AskUserQuestion available), commit without `Refs:` and say once that no tracker number was recorded. Never block the commit on it.
+     - Write each number exactly as it was given: don't change its case, don't add or strip a prefix, don't reformat it. Several numbers repeat the key, one per line, in the order given — the same repeatable-trailer convention `Fixes:` already uses.
      - `Refs:` and `Fixes:` are different axes and coexist on one commit: `Fixes:` points at the commit that introduced a bug, `Refs:` points at the tracker item this work belongs to. Never put a tracker number in `Fixes:`, and never put a sha in `Refs:`.
-     - When step 3 splits the diff, every commit from this invocation carries the same `Refs:` line(s). The skill has no basis for deciding which number belongs to which group, and guessing would record a linkage nobody stated.
-     - The `commit-msg` hook does not check this trailer at all — that hook ships to every repo installing this plugin, and a tracker's numbering scheme is one company's internal convention, so enforcing it there would impose that convention on everyone. Nothing will catch a mistyped number: copy it, don't retype it from memory.
+     - When step 3 splits the diff, which commits carry which number depends on where the number came from:
+       - **Given at invocation** — every commit from this invocation carries the same `Refs:` line(s). The number arrived once, before the split existed, so the skill has no basis for deciding which group it belongs to.
+       - **Asked** — each commit is asked separately and carries only its own answer. Never carry an answer forward to the next commit: putting one number on several commits means the human types it again each time. Reusing the previous answer would record a linkage nobody stated — the same mistake as inferring one.
+     - The `commit-msg` hook does not check this trailer at all — that hook ships to every repo installing this plugin, and a tracker's numbering scheme is one company's internal convention, so enforcing it there would impose that convention on everyone. Nothing will catch a mistyped number, and answering the question means typing one by hand — paste it from the tracker rather than recalling it.
 5. Commit with a HEREDOC so the blank line before the trailers is preserved:
 
    ```
@@ -76,7 +84,7 @@ Stage and commit the current changes without asking for confirmation — as one 
 
 ## Rules
 
-- **Do not ask for confirmation** before staging or committing.
+- **Do not ask for confirmation** before staging or committing. The single interruption this skill makes is Trailer 4's tracker-number question, which asks for input that only a human has, not for permission to proceed.
 - **Do not amend** existing commits. Always create a new one.
 - **Do not push.** Stop after the commit.
 - If `git status` shows a clean tree (nothing to stage, nothing staged), say so and stop — do not create an empty commit.
