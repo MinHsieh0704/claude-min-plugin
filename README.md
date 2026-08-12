@@ -23,7 +23,7 @@ claude --plugin-dir /path/to/this/repo
 | Skill | What it does |
 |---|---|
 | `/claude-min-plugin:coding-guidelines` | Ten guidelines covering assumptions, scope creep, security, dependencies, regressions, and error handling. A condensed version is injected into every session; this skill has the full text with rationale and examples. |
-| `/claude-min-plugin:commit` | Stages and commits without asking, generating a Conventional Commits subject plus `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailers, and a `Refs:` trailer when you pass it a tracker number. Splits into multiple commits when one set of trailers cannot describe the diff honestly. |
+| `/claude-min-plugin:commit` | Stages and commits without asking for confirmation, generating a Conventional Commits subject plus `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailers, and a `Refs:` trailer from a tracker number you pass in — or are asked for once per commit when you don't. Splits into multiple commits when one set of trailers cannot describe the diff honestly. |
 | `/claude-min-plugin:merge-worktree` | Fast-forwards the current worktree's branch into the main checkout, then removes the worktree and its branch. |
 
 ## Options
@@ -65,14 +65,14 @@ the default; each commit keeps its own answer, so putting one number on two
 commits means typing it twice. The number is never inferred from a branch name or
 a diff, and never offered as a guess to click — only what you state gets written,
 and a commit made without one simply has no `Refs:` line. The `commit-msg` hook
-does not check it either: that hook reaches every
-repo installing this plugin, and an issue-numbering scheme is a house convention,
-not something to enforce on everyone. Nothing catches a mistyped number.
+does not check it either: that hook reaches every repo installing this plugin,
+and an issue-numbering scheme is a house convention, not something to enforce on
+everyone. Nothing catches a mistyped number.
 
 The skill installs `skills/commit/hooks/commit-msg` into your repo as a git
-`commit-msg` hook (via `core.hooksPath`) without asking, which rejects a `fix` commit with no
-`Fixes:` trailer and warns when `Co-Authored-By: Claude` appears without
-`AI-Contribution`. It never touches a `commit-msg` hook that isn't this
+`commit-msg` hook (via `core.hooksPath`) without asking, which rejects a `fix`
+commit with no `Fixes:` trailer and warns when `Co-Authored-By: Claude` appears
+without `AI-Contribution`. It never touches a `commit-msg` hook that isn't this
 convention's own; its own copies it keeps current, upgrading an outdated install
 in place via the `hook-version` marker in the file header.
 
