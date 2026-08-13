@@ -2,58 +2,51 @@
 # commit-msg hook — enforce AI-attribution / fix-linkage conventions.
 # hook-version: 1
 #
-# Bump that number whenever the ENFORCEMENT behaviour below changes. The
-# commit skill compares it against the copy installed in a repo and
-# refreshes anything older; equal versions are left alone even when the
-# files differ, so a comment-only edit must not bump it. The skill also
-# recognises this file as its own by the tagline on the line above —
-# keep that wording intact.
+# 只要下方的「強制檢查行為」有變動，就把這個數字往上加。commit skill 會拿它與
+# 某個 repo 內已安裝的副本比對，並更新所有較舊的版本；版本相同時即使檔案內容有
+# 差異也不會動它，所以純註解的修改「不可」bump 這個數字。此外，該 skill 是靠上
+# 一行的標語認出這個檔案是它自己的 — 那行文字請維持原樣，勿翻譯或改寫。
 #
-# Install (per repo):
+# 安裝（每個 repo 各做一次）：
 #   mkdir -p .githooks
 #   cp commit-msg .githooks/commit-msg
 #   chmod +x .githooks/commit-msg
 #   git config core.hooksPath \
 #     "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.githooks"
 #
-# The path must be absolute and anchored to the main checkout: .githooks/
-# is untracked, so a relative core.hooksPath resolves against each linked
-# worktree's own root, finds nothing there, and git silently runs no hook.
-# core.hooksPath is shared config, so --git-common-dir (not --show-toplevel)
-# keeps it pointing at the main checkout even when run from a worktree.
+# 路徑必須是絕對路徑，而且要錨定在主 checkout 上：.githooks/ 未納入版控，所以
+# 相對的 core.hooksPath 會相對於各個 linked worktree 自己的根目錄解析，在那裡
+# 找不到東西，git 便會靜靜地不執行任何 hook。core.hooksPath 屬於共用設定，因此
+# 用 --git-common-dir（而非 --show-toplevel）才能讓它在從 worktree 內執行時，
+# 依然指向主 checkout。
 #
-# Rule: any commit whose subject's type is "fix" (Conventional Commits
-# style: `fix: description`, optionally `fix(scope): description`) must
-# carry a Fixes: <sha-or-unknown> trailer. This is the linkage that lets
-# later tooling answer "which commit introduced the code this fix
-# touches, and was that commit AI- or human-authored".
+# 規則：任何標題類型為 "fix" 的 commit（Conventional Commits 風格：
+# `fix: description`，也可寫成 `fix(scope): description`）都必須帶有
+# Fixes: <sha-or-unknown> trailer。有了這層連結，後續工具才有辦法回答
+# 「引入這次修正所觸及之程式碼的是哪個 commit，而那個 commit 是 AI 還是人寫的」。
 #
-# NOTE ON THE WORD LIST: the commit skill only ever generates the
-# Conventional Commits type "fix" (see SKILL.md) — one canonical word
-# behind the colon, so grep/log queries and commitlint-style tooling
-# stay reliable. This hook's detection is deliberately broader than
-# that single word, for two reasons:
-#   1. Commits typed by hand bypass the skill entirely and may use a
-#      synonym instead of the standard type.
-#   2. History predating this convention used the old bare
-#      verb-first style with no colon at all — those commits still
-#      need to be caught, so this hook falls back to checking the
-#      first word when there's no `type:` prefix.
-# This is still a closed word list, though, and closed lists are
-# inherently incomplete — a commit using a verb outside this list
-# (e.g. "repair", "address", "workaround") will slip past undetected.
-# That gap is a known, accepted limitation, not an oversight.
+# 關於字詞清單的說明：commit skill 只會產生 Conventional Commits 的 "fix" 這個
+# 類型（見 SKILL.md）— 冒號前只用這一個標準字，好讓 grep／log 查詢與
+# commitlint 之類的工具維持可靠。而這支 hook 的偵測範圍刻意比那單一個字更寬，
+# 有兩個原因：
+#   1. 手動輸入的 commit 完全繞過該 skill，可能改用同義字而非標準類型。
+#   2. 早於本慣例的歷史紀錄採用舊有的「動詞開頭、完全沒有冒號」寫法 — 那些
+#      commit 仍然需要被攔下，所以當沒有 `type:` 前綴時，這支 hook 會退回去
+#      檢查第一個字。
+# 話雖如此，這仍是一份封閉字詞清單，而封閉清單本質上就不可能窮盡 — 使用清單外
+# 動詞的 commit（例如 "repair"、"address"、"workaround"）就會漏網。這個缺口是
+# 已知且可接受的限制，不是疏忽。
 #
-# Rationale for why this is enforced by a hook instead of inferred
-# automatically via git blame / SZZ: see ../references/ai-attribution-proposal.md.
+# 至於為何是用 hook 強制檢查、而非透過 git blame / SZZ 自動推論，理由見
+# ../references/ai-attribution-proposal.md。
 
 set -euo pipefail
 
 COMMIT_MSG_FILE="$1"
 SUBJECT="$(head -n1 "$COMMIT_MSG_FILE")"
 
-# Prefer the Conventional Commits `type:` / `type(scope):` / `type!:` prefix;
-# fall back to the legacy bare first-word style if no colon prefix is found.
+# 優先採用 Conventional Commits 的 `type:` / `type(scope):` / `type!:` 前綴；
+# 若找不到冒號前綴，則退回舊式的「第一個字」寫法。
 if [[ "$SUBJECT" =~ ^([A-Za-z]+)(\([^\)]*\))?!?:[[:space:]] ]]; then
   TYPE="$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
 else
@@ -79,9 +72,8 @@ if [ "$is_fix_commit" = true ]; then
   fi
 fi
 
-# Optional consistency check: if an AI trailer is present, require the
-# contribution-level trailer alongside it (warning only, not blocking —
-# this is a self-reported judgment call, not something a hook can verify).
+# 選用的一致性檢查：當 AI trailer 存在時，要求貢獻程度的 trailer 一併出現
+# （僅警告，不阻擋 — 這是自我申報的主觀判斷，不是 hook 能驗證的東西）。
 if grep -qE '^Co-Authored-By: Claude ' "$COMMIT_MSG_FILE"; then
   if ! grep -qE '^AI-Contribution: (assisted|generated)$' "$COMMIT_MSG_FILE"; then
     echo "WARNING: Co-Authored-By: Claude present without an AI-Contribution: trailer." >&2
@@ -89,10 +81,9 @@ if grep -qE '^Co-Authored-By: Claude ' "$COMMIT_MSG_FILE"; then
   fi
 fi
 
-# Fixes-Candidates: is supplementary metadata for manual triage — it must
-# only ever accompany an honest "Fixes: unknown", never stand alone and
-# never coexist with a confirmed sha (that would claim both "we know" and
-# "we don't know" at once).
+# Fixes-Candidates: 是供人工分流用的補充資訊 — 它只能伴隨一個誠實的
+# 「Fixes: unknown」出現，絕不能單獨存在，也絕不能與已確認的 sha 並存
+# （那等於同時宣稱「我們知道」和「我們不知道」）。
 if grep -qE '^Fixes-Candidates: ' "$COMMIT_MSG_FILE"; then
   if ! grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE"; then
     echo "ERROR: 'Fixes-Candidates:' present without 'Fixes: unknown'." >&2
@@ -102,10 +93,9 @@ if grep -qE '^Fixes-Candidates: ' "$COMMIT_MSG_FILE"; then
   fi
 fi
 
-# Fixes: unknown and a confirmed Fixes: <sha> must never coexist in the
-# same commit — that would claim both "we don't know" and "we do know"
-# at once. Each Fixes: line is independently confirmed, or the whole
-# commit is honestly unknown; there's no partial-unknown state.
+# Fixes: unknown 與已確認的 Fixes: <sha> 絕不能出現在同一個 commit 裡 — 那等於
+# 同時宣稱「我們不知道」和「我們知道」。要嘛每一行 Fixes: 都各自確認過，要嘛
+# 整個 commit 就誠實地標為 unknown；沒有「部分未知」這種中間狀態。
 if grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE" && grep -qE '^Fixes: [0-9a-f]{7,40}$' "$COMMIT_MSG_FILE"; then
   echo "ERROR: 'Fixes: unknown' and a confirmed 'Fixes: <sha>' both present." >&2
   echo "       These are contradictory — either every hunk traces to a" >&2

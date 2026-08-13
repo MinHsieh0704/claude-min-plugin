@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 #
-# SessionStart handler — inject a condensed form of the coding guidelines.
+# SessionStart handler — 注入精簡版的 coding guidelines。
 #
-# This summary is DERIVED from skills/coding-guidelines/SKILL.md: the ten
-# numbered headings and their one-line taglines are copied from there. When
-# those headings change, regenerate this string — nothing checks the two for
-# drift automatically.
+# 這份摘要是從 skills/coding-guidelines/SKILL.md「衍生」而來：十個編號標題與其
+# 單行標語都是從那裡抄過來的。那些標題一有變動，就必須重新產生這段字串 — 沒有任何
+# 機制會自動偵測兩者之間的落差。
 #
-# The full 176-line text deliberately stays out of every session's context
-# (~1.5k tokens); Claude reads it on demand via /claude-min-plugin:coding-guidelines.
+# 176 行的完整全文刻意不進入每個 session 的 context（約 1.5k token）；Claude 會在
+# 需要時透過 /claude-min-plugin:coding-guidelines 自行讀取。
 #
-# Always on: this handler takes no userConfig gate. A user who does not want
-# the guidelines should disable the plugin.
+# 一律啟用：這支 handler 沒有 userConfig 開關。不想要這套準則的使用者請停用整個外掛。
 
 cat << 'EOF'
 {

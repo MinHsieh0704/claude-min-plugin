@@ -1,36 +1,32 @@
 #!/usr/bin/env python3
 """
-ai_attribution_stats.py — summarize AI-vs-human commit attribution using
-the Co-Authored-By / AI-Contribution / Fixes: trailer convention.
+ai_attribution_stats.py — 依據 Co-Authored-By / AI-Contribution / Fixes:
+trailer 慣例，統整「AI 對比人工」的 commit 歸屬。
 
-Usage:
+用法：
     python3 ai_attribution_stats.py [git-log-range] [--path <file-or-dir>]
 
-Example:
-    python3 ai_attribution_stats.py                     # whole history on current branch
-    python3 ai_attribution_stats.py main..dev            # a specific range
-    python3 ai_attribution_stats.py --path src/auth/     # feature-evolution timeline for a path
+範例：
+    python3 ai_attribution_stats.py                     # 目前分支的完整歷史
+    python3 ai_attribution_stats.py main..dev            # 指定範圍
+    python3 ai_attribution_stats.py --path src/auth/     # 某路徑的功能演進時間軸
 
-What it reports:
-  1. Overall AI vs human commit counts, split by AI-Contribution level.
-  2. Fix-linkage table: for every commit carrying a Fixes: trailer, whether
-     the ORIGIN commit (what Fixes: points to) and the FIX commit itself
-     were AI- or human-authored. This answers "was AI-led code fixed by a
-     human afterwards, and how often" without relying on automated git
-     blame / SZZ inference (which the team has decided not to depend on —
-     see ../references/ai-attribution-proposal.md for why).
-  3. With --path: a chronological AI-Contribution timeline for one file or
-     directory (via `git log --follow`), for tracking how a feature has
-     evolved across non-fix updates too — deliberately NOT a new trailer.
-     See ../references/ai-attribution-proposal.md section on why updates
-     don't get their own linkage trailer.
+它會回報什麼：
+  1. 整體 AI 與人工的 commit 數量，並依 AI-Contribution 程度細分。
+  2. fix 連結對照表：對每個帶有 Fixes: trailer 的 commit，判斷「原始 commit」
+     （Fixes: 所指向的那個）與「修正 commit」本身各自是 AI 還是人工撰寫。這回答了
+     「AI 主導的程式碼事後被人類修掉的頻率有多高」，而且不必倚賴自動化的 git
+     blame / SZZ 推論（團隊已決定不依賴那套 — 理由見
+     ../references/ai-attribution-proposal.md）。
+  3. 加上 --path 時：針對單一檔案或目錄，列出依時間排序的 AI-Contribution 時間軸
+     （透過 `git log --follow`），用來追蹤某個功能在非修正類更新中的演進 — 這是
+     刻意「不」引入新 trailer 的做法。為何更新類 commit 不另設專屬的連結 trailer，
+     見 ../references/ai-attribution-proposal.md 的相關章節。
 
-Caveats printed in the output, not swept under the rug:
-  - Relies entirely on trailers actually being present. Commits made
-    before this convention was adopted will show up as "untagged".
-  - "Fixes: unknown" means the author's own git-blame check was
-    inconclusive at commit time — these are counted separately, not
-    silently dropped and not guessed at after the fact.
+會印在輸出中、不掃到地毯下的但書：
+  - 完全倚賴 trailer 確實存在。採用本慣例之前所做的 commit 會被歸為 "untagged"。
+  - "Fixes: unknown" 代表作者在 commit 當下自行執行 git blame 的結果並不明確 —
+    這類 commit 會另外計數，不會被默默丟棄，也不會事後臆測補上。
 """
 
 import re
@@ -43,12 +39,10 @@ FIELD_SEP = "\x1f"
 
 AI_TRAILER_RE = re.compile(r"^Co-Authored-By: Claude ", re.MULTILINE)
 LEVEL_RE = re.compile(r"^AI-Contribution: (assisted|generated)$", re.MULTILINE)
-# Fixes: can appear more than once per commit (a commit may genuinely fix
-# more than one prior origin, each individually confident) — findall, not
-# search. "unknown" and a real sha coexisting is contradictory and the
-# hook rejects it going forward, but this script still defends against
-# older history or hand-typed commits that predate/bypass that check —
-# see the "contradictory" handling in main().
+# Fixes: 在單一 commit 中可能出現不只一次（一個 commit 確實可能修正多個先前的
+# 源頭，而且每個都各自有把握）— 所以用 findall 而非 search。"unknown" 與真實
+# sha 並存是自相矛盾的，往後 hook 會擋下這種寫法，但這支腳本仍要防禦較舊的歷史
+# 紀錄，或是早於／繞過該檢查的手動 commit — 見 main() 中的 "contradictory" 處理。
 FIXES_RE = re.compile(r"^Fixes: (unknown|[0-9a-f]{7,40})$", re.MULTILINE)
 CANDIDATES_RE = re.compile(r"^Fixes-Candidates: (.+)$", re.MULTILINE)
 
@@ -71,9 +65,9 @@ def load_commits(rev_range, path=None):
     try:
         raw = run_git(args)
     except subprocess.CalledProcessError as exc:
-        # git already names what it could not resolve (a bad rev range, a
-        # path outside the repo). Pass that through: resolve_short_sha()
-        # relies on run_git raising, so the catch belongs here, not there.
+        # git 本身已經指名它無法解析的東西（錯誤的 rev range、repo 外的路徑）。
+        # 直接把那段訊息透傳出去：resolve_short_sha() 依賴 run_git 會拋出例外，
+        # 所以這個 catch 該放在這裡，而不是放在那邊。
         sys.exit(f"error: git log failed: {exc.stderr.strip() or exc}")
     commits = {}
     order = []
@@ -87,7 +81,7 @@ def load_commits(rev_range, path=None):
         full_hash, subject, body = parts
         is_ai = bool(AI_TRAILER_RE.search(body))
         level_m = LEVEL_RE.search(body)
-        fixes_list = FIXES_RE.findall(body)  # e.g. ["a1b2c3d", "unknown"] — may be several
+        fixes_list = FIXES_RE.findall(body)  # 例如 ["a1b2c3d", "unknown"] — 可能有多筆
         candidates_m = CANDIDATES_RE.search(body)
         commits[full_hash] = {
             "subject": subject,
@@ -101,8 +95,8 @@ def load_commits(rev_range, path=None):
 
 
 def print_timeline(path, commits, order):
-    # order[] comes back newest-first from git log; print oldest-first so
-    # it reads as the feature's actual evolution.
+    # order[] 從 git log 回來時是最新在前；這裡改以最舊在前印出，讀起來才像該功能
+    # 實際的演進歷程。
     print(f"=== Feature timeline: {path} ===")
     print("(chronological; --follow tracks the path across renames)")
     for full_hash in reversed(order):
@@ -129,7 +123,7 @@ def resolve_short_sha(short_sha, commits):
     matches = [h for h in commits if h.startswith(short_sha)]
     if len(matches) == 1:
         return matches[0]
-    # Not in the loaded range (e.g. older history outside rev_range) — try git directly.
+    # 不在已載入的範圍內（例如落在 rev_range 之外的較舊歷史）— 直接問 git。
     try:
         full = run_git(["rev-parse", short_sha]).strip()
         return full if full in commits else None
@@ -152,9 +146,9 @@ def main():
 
     if path:
         if not order:
-            # An empty timeline plus the note below reads as "checked, nothing
-            # of note"; the path having no history at all is a different
-            # answer. Say which one it is, same as the empty range does.
+            # 空的時間軸再加上底下那段註記，讀起來像是「查過了，沒什麼特別的」；
+            # 但「這個路徑根本沒有任何歷史」是完全不同的答案。要講清楚是哪一種，
+            # 跟空範圍的處理方式一致。
             print(f"No commits touch {path} — nothing to report.")
             return
         print_timeline(path, commits, order)
@@ -162,8 +156,8 @@ def main():
 
     total = len(commits)
     if not total:
-        # Every table below reduces to zeros for an empty range, which reads as
-        # a real result rather than an empty one. Say so and stop.
+        # 範圍為空時，底下每張表都會退化成一整排 0，那看起來像是一個真實結果而不是
+        # 空結果。所以直接講明並停止。
         print(f"No commits in {rev_range or 'this branch'} — nothing to report.")
         return
 
@@ -196,14 +190,11 @@ def main():
         has_unknown = "unknown" in c["fixes"]
 
         if has_unknown and confirmed_shas:
-            # Contradictory data (unknown + a confirmed sha together) is
-            # supposed to be impossible — the hook rejects it going
-            # forward — but pre-fix history or a hand-typed commit that
-            # bypassed the hook could still have it. Don't silently drop
-            # the confirmed sha(s) the way treating this as plain
-            # "unknown" would; process them, and flag the contradiction
-            # separately so it's visible rather than swept in either
-            # direction.
+            # 自相矛盾的資料（unknown 與已確認的 sha 同時出現）照理說不可能發生
+            # — 往後 hook 會擋下 — 但修正前的歷史紀錄，或是繞過 hook 的手動
+            # commit 仍可能有。不要像「一律當成 unknown」那樣默默丟掉已確認的
+            # sha；照常處理它們，並把這個矛盾另外標記出來，讓它被看見，而不是往
+            # 任何一邊掃掉。
             contradictory += 1
         elif has_unknown:
             unknown += 1

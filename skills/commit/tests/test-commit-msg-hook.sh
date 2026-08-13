@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 # test-commit-msg-hook.sh
 #
-# Automated test suite for the commit-msg attribution hook. Does NOT need
-# a real git repo — the hook only reads the message file passed as $1,
-# so this just crafts message files and checks the hook's exit code
-# (and, for a few cases, that the RIGHT error fired, not just any error).
+# commit-msg 歸屬 hook 的自動化測試套件。「不」需要真實的 git repo — 該 hook
+# 只會讀取以 $1 傳入的訊息檔，所以這裡單純製造各種訊息檔，再檢查 hook 的結束碼
+# （其中少數案例還會檢查「觸發的是對的那個錯誤」，而不只是隨便哪個錯誤）。
 #
-# Usage:
+# 用法：
 #   chmod +x test-commit-msg-hook.sh commit-msg
 #   ./test-commit-msg-hook.sh ./commit-msg
 #
-# On Windows: run this from Git Bash (not cmd.exe/PowerShell).
+# 在 Windows 上：請從 Git Bash 執行（不是 cmd.exe／PowerShell）。
 #
-# Exit code: 0 if every case behaved as expected, 1 if any case didn't —
-# safe to wire into CI.
+# 結束碼：每個案例都符合預期則為 0，只要有任一案例不符則為 1 — 可安心接進 CI。
 
 set -uo pipefail
 
@@ -31,7 +29,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 PASS=0
 FAIL=0
 
-# run_case NAME EXPECTED_EXIT CONTENT [STDERR_MUST_CONTAIN]
+# run_case 案例名稱 預期結束碼 訊息內容 [stderr 必須包含的字串]
 run_case() {
   local name="$1" expected_exit="$2" content="$3" stderr_pattern="${4:-}"
   local msgfile="$TMPDIR/msg.txt" errfile="$TMPDIR/stderr.txt"
@@ -61,7 +59,7 @@ run_case() {
 echo "Testing hook: $HOOK"
 echo "========================================"
 
-# --- Conventional Commits (colon) format ---
+# --- Conventional Commits（有冒號）格式 ---
 
 run_case "fix: no Fixes: trailer -> reject" 1 \
 "fix: correct off-by-one
@@ -95,7 +93,7 @@ run_case "fixed: (past tense) no Fixes: -> reject" 1 \
 "fixed: race condition
 "
 
-# --- Legacy bare-word format (pre-Conventional-Commits history) ---
+# --- 舊式純字詞格式（早於 Conventional Commits 的歷史紀錄）---
 
 run_case "legacy 'fix ...' (no colon) no Fixes: -> reject" 1 \
 "fix off-by-one bug
@@ -105,7 +103,7 @@ run_case "legacy 'update ...' (no colon, non-fix) -> pass" 0 \
 "update logging verbosity
 "
 
-# --- Multiple origins / candidates ---
+# --- 多個源頭 / 候選清單 ---
 
 run_case "multiple Fixes: lines (tangled commit) -> pass" 0 \
 "fix: two unrelated regressions
@@ -141,7 +139,7 @@ Fixes: unknown
 Fixes: a1b2c3d
 " "both present"
 
-# --- AI-Contribution warning (non-blocking) ---
+# --- AI-Contribution 警告（不阻擋）---
 
 run_case "Co-Authored-By without AI-Contribution -> pass, but warns" 0 \
 "feat: add helper
@@ -156,7 +154,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 AI-Contribution: assisted
 "
 
-# --- Baseline ---
+# --- 基準案例 ---
 
 run_case "plain non-fix commit, no AI involvement -> pass" 0 \
 "chore: bump dependency version

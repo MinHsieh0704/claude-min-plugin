@@ -1,33 +1,26 @@
 #!/usr/bin/env bash
 #
-# PreToolUse handler — require explicit confirmation before a git commit runs.
+# PreToolUse handler — 在 git commit 執行前要求明確確認。
 #
-# Gated on the plugin's `commit_gate` userConfig option, which defaults to
-# true. See user-prompt-submit.sh for why the value is read from the
-# environment rather than substituted into the hook command.
+# 受外掛的 `commit_gate` userConfig 選項控制，預設為 true。為何是從環境變數讀取
+# 而非代入 hook 指令中，見 user-prompt-submit.sh 的說明。
 #
-# Scope note: this matches `git`, then any number of whitespace-separated
-# tokens, then `commit`, within the tool call's `command` only. A command that
-# merely mentions that pair — grepping the log for it, say — still trips the
-# prompt. That is deliberate: the failure mode is one extra confirmation,
-# whereas parsing the command precisely enough to avoid it would risk missing a
-# real commit.
+# 比對範圍說明：此處比對 `git`，接著任意數量以空白分隔的 token，再接 `commit`，
+# 且只在工具呼叫的 `command` 欄位內比對。單純提到這組字的指令 — 例如拿它去 grep
+# log — 一樣會觸發確認提示。這是刻意的：最壞情況只是多確認一次，而要精準到能避開
+# 這種誤判的指令剖析，反而有漏掉真正 commit 的風險。
 #
-# The tokens in between are what a literal "git commit" match missed: git's
-# global options sit there, so `git -C <path> commit` and `git --no-pager
-# commit` slipped through the gate entirely, as did `git  commit` with two
-# spaces. `-C` is not exotic — it is the ordinary way to drive a repo from
-# outside its working directory, which any worktree- or CI-shaped workflow
-# reaches for sooner or later.
+# 中間那些 token 正是單純比對字面 "git commit" 會漏掉的部分：git 的全域選項就落在
+# 那裡，所以 `git -C <path> commit` 與 `git --no-pager commit` 會完全繞過這道關卡，
+# 連中間打了兩個空白的 `git  commit` 也一樣。`-C` 並不冷僻 — 它就是從工作目錄外操作
+# 一個 repo 的標準做法，任何 worktree 或 CI 形態的流程遲早都會用上。
 #
-# The match is scoped to `command` rather than the whole payload because the
-# PreToolUse input also carries `description`, `cwd`, and `transcript_path`. A
-# harmless call described as "check git commit policy" tripped the old
-# whole-payload match, which is noise unrelated to what the call actually runs.
+# 比對範圍限縮在 `command` 而非整包 payload，是因為 PreToolUse 的輸入還帶有
+# `description`、`cwd` 與 `transcript_path`。一個無害、但描述寫成 "check git commit
+# policy" 的呼叫會觸發舊版的整包比對，那與該呼叫實際執行的內容無關，純屬雜訊。
 #
-# Always exits 0. A PreToolUse hook that exits 2 blocks the call outright; the
-# decision here is "ask", which is carried in the JSON payload, not the exit
-# code.
+# 一律以 0 結束。PreToolUse hook 若以 2 結束會直接封鎖該呼叫；這裡的決策是「詢問」，
+# 而它是由 JSON payload 傳達，不是由結束碼傳達。
 
 if [ "${CLAUDE_PLUGIN_OPTION_COMMIT_GATE:-true}" != "true" ]; then
   exit 0
@@ -35,14 +28,12 @@ fi
 
 input="$(cat)"
 
-# Take the JSON string value of "command": the alternation consumes escaped
-# pairs (\" among them) before plain characters, so the match ends at the first
-# *unescaped* quote and cannot run on into the next key.
+# 取出 "command" 的 JSON 字串值：這個交替樣式會先消耗掉轉義配對（包含 \"）再處理
+# 一般字元，所以比對會停在第一個「未轉義」的引號，不會一路吃到下一個 key。
 command="$(printf '%s' "$input" | grep -oE '"command"[[:space:]]*:[[:space:]]*"(\\.|[^"\\])*"' | head -n 1)"
 
-# No extractable command — fall back to searching the whole payload. Asking
-# once too often is the safe direction to fail; letting a real commit through
-# unprompted is not.
+# 取不出 command — 退回搜尋整包 payload。多問一次是安全的失敗方向；讓真正的 commit
+# 未經詢問就過關則不是。
 if [ -z "$command" ]; then
   command="$input"
 fi
