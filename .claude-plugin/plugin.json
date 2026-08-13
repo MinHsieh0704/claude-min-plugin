@@ -19,7 +19,7 @@
     "reply_zh_hant": {
       "type": "boolean",
       "title": "Reply in Traditional Chinese",
-      "description": "Claude replies in Traditional Chinese (zh-Hant). Code, commands, identifiers, and commit messages stay in their original language.",
+      "description": "Claude replies in Traditional Chinese (zh-Hant). Code, commands, identifiers, and file paths stay in their original language.",
       "default": true
     },
     "commit_gate": {
