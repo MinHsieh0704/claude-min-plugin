@@ -10,7 +10,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 ## Single source of truth
 
-`skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines via the import at the bottom of this file. **Never create a second copy.**
+`skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines, which reach each session through the `session-start.sh` summary plus `/claude-min-plugin:coding-guidelines` on demand. **Never create a second copy.**
 
 `hooks-handlers/session-start.sh` embeds a *derived* summary of that file's ten headings. When a heading or its tagline changes, regenerate the summary by hand — nothing detects drift between the two.
 
@@ -51,5 +51,3 @@ Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass a
 ## Commit convention
 
 This repo follows its own `skills/commit/SKILL.md`: Conventional Commits subject, plus the `AI-Contribution` and `Fixes:` trailers.
-
-@skills/coding-guidelines/SKILL.md
