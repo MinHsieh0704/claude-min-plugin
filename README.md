@@ -1,8 +1,8 @@
 # claude-min-plugin
 
-一個包含三個 skill 與三個 hook 的 Claude Code 外掛：一套用來減少 LLM 常見錯誤的
-coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程，以及一個 worktree 合併
-輔助工具。
+一個包含四個 skill 與三個 hook 的 Claude Code 外掛：一套用來減少 LLM 常見錯誤的
+coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 worktree 合併輔助
+工具，以及一個中英文語言分界的稽核工具。
 
 ## 安裝
 
@@ -24,6 +24,23 @@ claude --plugin-dir /path/to/this/repo
 | `/claude-min-plugin:coding-guidelines` | 十條準則，涵蓋臆測、範圍蔓延、資安、相依套件、回歸風險與錯誤處理。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
 | `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
+| `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md` 與 manifest 用英文。回報逐檔比例，並抓出混進 `echo` / `print` / `throw` 的中文字元。只分析與回報，不會自行改寫。 |
+
+## 語言分界
+
+判斷一段文字用什麼語言，只看**誰讀它**，不看檔案類型：
+
+| 語言 | 適用範圍 |
+|---|---|
+| 繁體中文 | 程式碼註解與 docstring、`README.md`、`references/` 下的理由文件 — 只有本 repo 維護者會讀到的文字。 |
+| 英文 | 所有 runtime 輸出（stdout、stderr、丟出的例外）、`SKILL.md`、`CLAUDE.md`、各種 manifest、hook 注入模型的字串、commit message — 會離開 repo 或被機器讀取的文字。 |
+
+因此有一條可以直接 grep 的硬規則：**`.sh` / `.py` 的字串字面值內不得出現任何 CJK 字元**。
+註解裡多少中文都可以，字串裡一個都不行。理由、邊界案例與偵測方法的極限見
+`skills/language-check/references/language-convention.md`（以繁體中文撰寫）。
+
+這條規則與下方的 **Reply in Traditional Chinese** 選項無關：那個選項管 Claude 的「回覆」
+語言，這條規則管檔案內容的「撰寫」語言，兩者互不影響。
 
 ## 選項
 

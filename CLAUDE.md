@@ -14,6 +14,10 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `hooks-handlers/session-start.sh` embeds a *derived* summary of that file's ten headings. When a heading or its tagline changes, regenerate the summary by hand — nothing detects drift between the two.
 
+The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning. The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there either. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
+
+Both manifests carry a plugin `description`, and they must stay identical: `.claude-plugin/plugin.json` and the `plugins[0].description` in `.claude-plugin/marketplace.json`. Editing one and not the other is silent — nothing validates that they agree.
+
 ## Path rules (non-negotiable)
 
 Plugins are copied to a cache directory on install, so anything outside the plugin directory is gone at runtime:

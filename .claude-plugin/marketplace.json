@@ -1,6 +1,6 @@
 {
   "name": "min-plugins",
-  "description": "Min.Hsieh's personal Claude Code plugins — coding discipline, commit attribution, and git worktree workflow",
+  "description": "Min.Hsieh's personal Claude Code plugins — coding discipline, commit attribution, git worktree workflow, and language-split auditing",
   "owner": {
     "name": "Min.Hsieh",
     "url": "https://github.com/MinHsieh0704"
@@ -9,7 +9,7 @@
     {
       "name": "claude-min-plugin",
       "source": "./",
-      "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
+      "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
       "category": "development",
       "homepage": "https://github.com/MinHsieh0704/claude-min-plugin"
     }

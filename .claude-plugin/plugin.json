@@ -1,7 +1,7 @@
 {
   "name": "claude-min-plugin",
   "version": "0.4.1",
-  "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers and a worktree merge helper",
+  "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
   "author": {
     "name": "Min.Hsieh",
     "url": "https://github.com/MinHsieh0704"
@@ -13,7 +13,8 @@
     "git-workflow",
     "conventional-commits",
     "ai-attribution",
-    "worktree"
+    "worktree",
+    "language-audit"
   ],
   "userConfig": {
     "reply_zh_hant": {
