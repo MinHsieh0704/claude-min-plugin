@@ -1,6 +1,6 @@
 {
   "name": "claude-min-plugin",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
   "author": {
     "name": "Min.Hsieh",
