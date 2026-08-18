@@ -1,6 +1,6 @@
 {
   "name": "min-plugins",
-  "description": "Min.Hsieh's personal Claude Code plugins — coding discipline, commit attribution, git worktree workflow, and language-split auditing",
+  "description": "Min.Hsieh's personal Claude Code plugins - coding discipline, commit attribution, git worktree workflow, and language-split auditing",
   "owner": {
     "name": "Min.Hsieh",
     "url": "https://github.com/MinHsieh0704"

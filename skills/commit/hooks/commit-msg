@@ -87,7 +87,7 @@ fi
 if grep -qE '^Fixes-Candidates: ' "$COMMIT_MSG_FILE"; then
   if ! grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE"; then
     echo "ERROR: 'Fixes-Candidates:' present without 'Fixes: unknown'." >&2
-    echo "       Fixes-Candidates only makes sense alongside an honest 'unknown' —" >&2
+    echo "       Fixes-Candidates only makes sense alongside an honest 'unknown' -" >&2
     echo "       if you have a confirmed single sha, use 'Fixes: <sha>' instead and drop Fixes-Candidates." >&2
     exit 1
   fi
@@ -98,7 +98,7 @@ fi
 # 整個 commit 就誠實地標為 unknown；沒有「部分未知」這種中間狀態。
 if grep -qE '^Fixes: unknown$' "$COMMIT_MSG_FILE" && grep -qE '^Fixes: [0-9a-f]{7,40}$' "$COMMIT_MSG_FILE"; then
   echo "ERROR: 'Fixes: unknown' and a confirmed 'Fixes: <sha>' both present." >&2
-  echo "       These are contradictory — either every hunk traces to a" >&2
+  echo "       These are contradictory - either every hunk traces to a" >&2
   echo "       confirmed origin (drop the 'unknown' line), or the commit is" >&2
   echo "       genuinely unresolved (drop the confirmed sha line; use" >&2
   echo "       Fixes-Candidates instead if you have leads worth recording)." >&2

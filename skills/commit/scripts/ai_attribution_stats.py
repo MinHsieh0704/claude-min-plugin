@@ -110,7 +110,7 @@ def print_timeline(path, commits, order):
         print(f"  {full_hash[:7]}  {tag:10s}  {c['subject']}{fixes_note}")
     print()
     print("Note: this is a per-commit trace, not a cumulative AI-percentage for the")
-    print("file. Each commit's AI-Contribution reflects only that commit's own diff —")
+    print("file. Each commit's AI-Contribution reflects only that commit's own diff -")
     print("it is judged fresh every time, never inherited from an earlier commit that")
     print("touched the same feature. See the commit skill's own")
     print("references/ai-attribution-proposal.md for why a cumulative")
@@ -149,7 +149,7 @@ def main():
             # 空的時間軸再加上底下那段註記，讀起來像是「查過了，沒什麼特別的」；
             # 但「這個路徑根本沒有任何歷史」是完全不同的答案。要講清楚是哪一種，
             # 跟空範圍的處理方式一致。
-            print(f"No commits touch {path} — nothing to report.")
+            print(f"No commits touch {path} - nothing to report.")
             return
         print_timeline(path, commits, order)
         return
@@ -158,7 +158,7 @@ def main():
     if not total:
         # 範圍為空時，底下每張表都會退化成一整排 0，那看起來像是一個真實結果而不是
         # 空結果。所以直接講明並停止。
-        print(f"No commits in {rev_range or 'this branch'} — nothing to report.")
+        print(f"No commits in {rev_range or 'this branch'} - nothing to report.")
         return
 
     ai_count = sum(1 for c in commits.values() if c["is_ai"])
@@ -174,7 +174,7 @@ def main():
     print(f"  AI-Contribution: generated: {level_counts['generated']}")
     untagged_ai = ai_count - level_counts["assisted"] - level_counts["generated"]
     if untagged_ai:
-        print(f"  (missing AI-Contribution level: {untagged_ai} — likely pre-dates this convention)")
+        print(f"  (missing AI-Contribution level: {untagged_ai} - likely pre-dates this convention)")
 
     print()
     print("=== Fix linkage (Fixes: trailer) ===")
@@ -231,14 +231,14 @@ def main():
         print(f"  Fixes: <sha> pointing outside loaded range/not found: {unresolved}")
     if contradictory:
         print(f"  WARNING: {contradictory} commit(s) had 'Fixes: unknown' AND a confirmed sha")
-        print("    together — contradictory data the hook now blocks going forward, but")
+        print("    together - contradictory data the hook now blocks going forward, but")
         print("    these predate that check (or bypassed it). Confirmed shas were still")
         print("    counted above rather than silently dropped; worth a manual look.")
 
     print()
     print("Note: this table only reflects commits that carry the trailer convention.")
     print("Commits from before the convention was adopted are invisible to this report,")
-    print("not counted as human-led — treat historical trend lines with that in mind.")
+    print("not counted as human-led - treat historical trend lines with that in mind.")
 
 
 if __name__ == "__main__":

@@ -44,7 +44,7 @@ if printf '%s' "$command" | grep -Eq 'git[[:space:]]+([^[:space:]]+[[:space:]]+)
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "ask",
-    "permissionDecisionReason": "claude-min-plugin: automatic commits are gated — confirm this git commit explicitly."
+    "permissionDecisionReason": "claude-min-plugin: automatic commits are gated - confirm this git commit explicitly."
   }
 }
 EOF
