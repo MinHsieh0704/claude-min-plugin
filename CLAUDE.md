@@ -14,7 +14,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `hooks-handlers/session-start.sh` embeds a *derived* summary of that file's ten headings. When a heading or its tagline changes, regenerate the summary by hand — nothing detects drift between the two.
 
-The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning. The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there either. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
+The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` covers the one class the line-based scan structurally cannot (an output statement split across lines). The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there either. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
 
 Both manifests carry a plugin `description`, and they must stay identical: `.claude-plugin/plugin.json` and the `plugins[0].description` in `.claude-plugin/marketplace.json`. Editing one and not the other is silent — nothing validates that they agree.
 
@@ -43,6 +43,7 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
+git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
 
