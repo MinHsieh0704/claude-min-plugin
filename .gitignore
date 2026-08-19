@@ -10,6 +10,12 @@ CLAUDE.local.md
 __pycache__/
 *.py[cod]
 
+# Installed copy of skills/commit/hooks/commit-msg, reinstalled per clone by
+# the commit skill. Only this one file is ignored: core.hooksPath aims the
+# whole repo at .githooks/, so ignoring the directory would swallow a shared
+# hook someone adds there later.
+.githooks/commit-msg
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
