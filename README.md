@@ -22,7 +22,7 @@ claude --plugin-dir /path/to/this/repo
 | Skill | 功能 |
 |---|---|
 | `/claude-min-plugin:coding-guidelines` | 十條準則，涵蓋臆測、範圍蔓延、資安、相依套件、回歸風險與錯誤處理。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
-| `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
+| `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
 
@@ -81,7 +81,31 @@ commit；當 git blame 結論不明時則寫 `Fixes: unknown`，並可搭配一�
 預設值是「沒有追蹤編號」；每個 commit 各自保留自己的答案，所以要讓兩個 commit 帶
 同一個編號，就得輸入兩次。這個編號永遠不會從分支名稱或 diff 推測出來，也不會以猜測
 選項的形式讓你點選 — 只有你明講的內容會被寫入，沒帶編號的 commit 就單純沒有 `Refs:`
-這一行。`commit-msg` hook 同樣不檢查它：那支 hook 會進到每一個安裝此外掛的 repo，而
+這一行。
+
+那次提問也是整個流程唯一會停下來的地方，所以它一併充當煞車：第三個選項「先看 diff」
+不回答 trailer，而是印出 `git diff --staged` 與原本要用的完整訊息，然後不建立那個 commit。
+
+煞車只擋一個 commit，不是整次呼叫。拆分的前提本來就是各組獨立到足以各自帶自己的
+trailer，所以擋掉其中一個，對其他組沒有影響。被擋下的那組會從 index 取消 stage，一方面
+免得被下一個 commit 一起吃進去，另一方面讓收尾時的 `git status` 剛好只列出你還沒看過的
+東西：
+
+| 情況 | 結果 |
+|---|---|
+| 沒有拆分，選「先看 diff」 | 不建立 commit。index 維持不動 — 這種情況是用 `git add -A` stage 的，可能掃進了你自己先 stage 好的東西，不該替你取消。 |
+| 拆成三個，在第 2 個喊停 | 第 1 個維持已建立，第 3 個依它自己的答案照常建立。第 2 組取消 stage，留在工作目錄。 |
+| 拆成三個，在第 2 個喊停，而第 3 組用到第 2 組新加的東西 | 第 1 個維持已建立；第 2、3 組一起擋下，都留在工作目錄，並明講是哪幾組、為什麼連帶擋。 |
+| 拆成三個，在最後一個喊停 | 前兩個維持已建立，第 3 組取消 stage 留在工作目錄。 |
+| 拆成三個，三個都喊停 | 一個 commit 都沒有，三組全部取消 stage 留在工作目錄。 |
+| 呼叫時就帶了編號（`/claude-min-plugin:commit BUG-1234`） | 不會有這道提問，也就沒有這個煞車 — 傳編號本身就等於放行。 |
+| headless／自動化，問不了 | 同樣沒有煞車。直接 commit、不帶 `Refs:`，並說明沒有記錄編號。 |
+
+第三列那個例外關乎正確性而非整潔：若後面某組用到了被擋下那組新加的東西，單獨 commit 它
+會留下建不起來的樹。已經建立的 commit 絕不會被 amend 或 reset。看完想繼續，再叫一次這個
+skill 就好 — 它會從工作目錄剩下的改動重新開始，重新產生訊息、也重新問一次編號。
+
+`commit-msg` hook 同樣不檢查它：那支 hook 會進到每一個安裝此外掛的 repo，而
 issue 編號規則是各團隊自家的慣例，不該強加於所有人。編號打錯了，沒有任何東西會攔下來。
 
 這個 skill 會直接把 `skills/commit/hooks/commit-msg` 以 git `commit-msg` hook 的形式
