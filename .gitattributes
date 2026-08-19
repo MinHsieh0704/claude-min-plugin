@@ -1,0 +1,15 @@
+# Shell scripts keep LF in the working tree on every platform.
+#
+# This repo ships them as executables rather than as sources someone reads:
+# hooks-handlers/ runs from the plugin cache on every session, and
+# skills/commit/hooks/commit-msg is copied into each installing repo's
+# .githooks/ and run by git. A CR at the end of a line breaks any shell that
+# does not tolerate it. Git Bash on Windows happens to tolerate it, which is
+# precisely why the breakage would first surface on somebody else's machine
+# rather than here.
+#
+# Nothing else is pinned: Python, Markdown, JSON and the manifests are read by
+# parsers that do not care, and forcing them would rewrite every file in the
+# working tree for no gain.
+*.sh text eol=lf
+skills/commit/hooks/commit-msg text eol=lf
