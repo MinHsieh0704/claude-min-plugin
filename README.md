@@ -114,6 +114,20 @@ trailer 的 `fix` commit，並在出現 `Co-Authored-By: Claude` 卻缺少 `AI-C
 時發出警告。它絕不動不屬於本慣例的 `commit-msg` hook；屬於自己的那份則會持續維持最新，
 透過檔案標頭中的 `hook-version` 標記就地升級過舊的安裝。
 
+`.githooks/` 刻意不納入版控（進了版控的第二份副本會自由地跟正本漂移），代價是此後
+`git status` 會永遠多一行 `?? .githooks/`。所以**第一次安裝時**會問你要不要順手把它寫進
+`.gitignore`，三個選項，建議第一個：
+
+| 選項 | 說明 |
+|---|---|
+| `.githooks/commit-msg`（建議） | 只忽略這個外掛建立的那一個檔案。 |
+| `.githooks/` | 忽略整個目錄。但 `core.hooksPath` 已經把整個 repo 指向那裡，之後團隊若在其中加一支共用 hook，會被無聲吞掉。 |
+| 不動 `.gitignore` | 保留那行 untracked 訊息。 |
+
+只在第一次安裝時問，重新啟用、版本升級與健康的 repo 都不會問；已經被忽略的話也不會問。
+寫進去的那一行**不會**被帶進這次的 commit —— 它屬於 repo 管線而非你要記錄的改動，會留在
+未 stage 的狀態讓你另外處理。
+
 `skills/commit/scripts/ai_attribution_stats.py` 會從這些 trailer 產出整體歸屬統計與
 一份 fix 連結對照表。設計理由與已知限制見
 `skills/commit/references/ai-attribution-proposal.md`（以繁體中文撰寫）。
