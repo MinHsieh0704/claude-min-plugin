@@ -2,10 +2,9 @@
 CLAUDE.local.md
 .claude/settings.local.json
 
-# Installed copy of skills/commit/hooks/commit-msg. Not committed: a second
-# copy of the canonical hook in this repo would be free to drift from it.
-# The commit skill reinstalls it per clone.
-.githooks/
+# Worktrees created by EnterWorktree. Transient by design: each one is a linked
+# checkout that merge-worktree removes once its branch has landed.
+.claude/worktrees/
 
 # Python bytecode from skills/commit/scripts/
 __pycache__/
