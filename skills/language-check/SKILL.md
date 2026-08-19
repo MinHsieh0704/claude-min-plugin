@@ -210,6 +210,14 @@ The sharpest consequence, and the one worth checking first:
     **The rule**. That one stays a hand check, which is why it is written there as a rule rather
     than delegated to this script.
 
+    **If the script cannot run, report step 5b as not run — never substitute a hand read and
+    file it under this step's count.** A non-interactive session may have no way to approve the
+    command, and the obvious fallback is to read the `print()` calls by eye instead. That
+    fallback is the exact method this step exists to replace: a person scanning lines misses the
+    split-across-lines case for the same structural reason the grep does, so it returns a number
+    that looks like a 5b result while carrying none of its guarantee. An audit missing 5b is
+    incomplete, and saying so is worth more than a count nobody can trust.
+
 5c. **Widen step 5's character class as well — a net that backstops a widened pass has to be
     widened with it.** Step 4b took step 4 from CJK to non-ASCII, but step 5 stayed on the CJK
     ranges, and that asymmetry opens a hole precisely where the two nets were meant to overlap:
