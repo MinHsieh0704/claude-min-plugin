@@ -1,6 +1,6 @@
 ---
 name: language-check
-description: Audit which parts of a repo are written in Traditional Chinese and which in English, and flag violations of the reader-based split — zh-Hant for code comments and human-facing docs, English and plain ASCII for all runtime output (stdout, stderr, thrown errors), skill files, and manifests. Use when asked which parts of a project are Chinese vs English, when auditing language consistency, when a symbol or a localised label reaches a console and breaks its encoding, or before adding a comment, log line, or error message to a repo that follows this convention.
+description: Audit which parts of a repo are written in Traditional Chinese and which in English, and flag violations of the reader-based split — zh-Hant for code comments and human-facing docs, English and plain ASCII for all runtime output (stdout, stderr, thrown errors), skill and subagent-definition files, and manifests. Use when asked which parts of a project are Chinese vs English, when auditing language consistency, when a symbol or a localised label reaches a console and breaks its encoding, or before adding a comment, log line, or error message to a repo that follows this convention.
 ---
 
 # Language check
@@ -53,9 +53,10 @@ extension, never whether it "looks like documentation".
       raise RuntimeError("PERIOD_EN must name exactly the labels in PERIODS")
   ```
 
-- Files a machine reads: `SKILL.md` frontmatter and body, `CLAUDE.md`, `AGENTS.md`, manifests
-  (`plugin.json`, `package.json`), hook configuration, and any string a hook injects into a
-  model's context.
+- Files a machine reads: `SKILL.md` frontmatter and body, a subagent definition
+  (`agents/<name>.md` — its body is a system prompt, read only by the model), `CLAUDE.md`,
+  `AGENTS.md`, manifests (`plugin.json`, `package.json`), hook configuration, and any string
+  a hook injects into a model's context.
 - Anything distributed: published package metadata, and commit messages.
 - Identifiers, of course — function and variable names, CLI flags, config keys, file paths.
 

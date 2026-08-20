@@ -6,13 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The repository root **is** the plugin (`claude-min-plugin`) and also its own marketplace (`min-plugins`, via `"source": "./"`). There is no application code — every file here is plugin content.
 
-`.claude-plugin/` holds only the two manifests. Component directories (`skills/`, `hooks/`, `hooks-handlers/`) live at the repo root and must never be moved inside `.claude-plugin/`.
+`.claude-plugin/` holds only the two manifests. Component directories (`skills/`, `agents/`, `hooks/`, `hooks-handlers/`) live at the repo root and must never be moved inside `.claude-plugin/`.
 
 ## Single source of truth
 
 `skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines, which reach each session through the `session-start.sh` summary plus `/claude-min-plugin:coding-guidelines` on demand. **Never create a second copy.**
 
 `hooks-handlers/session-start.sh` embeds a *derived* summary of that file's ten headings. When a heading or its tagline changes, regenerate the summary by hand — nothing detects drift between the two.
+
+Both agents in `agents/` reach the guidelines the other way — by *reference*, through `skills: coding-guidelines` in their frontmatter, which loads the whole 176-line file into the agent's context at startup with no tool call. The bare skill name is what resolves for a plugin's own skill; the namespaced `claude-min-plugin:coding-guidelines` form is not what that field takes. This is deliberately a reference and not a restatement: an agent that spelled the rules out again would be a third derived copy, on top of the `session-start.sh` summary and the `README.md` language table, with nothing to detect its drift. Keep it that way — an agent may say which *kinds* of guideline apply to its job, but must never hard-code rule numbers or re-list the rules themselves.
 
 The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` covers the one class the line-based scan structurally cannot (an output statement split across lines). The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there either. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
 
@@ -50,6 +52,22 @@ claude --plugin-dir .                      # load without installing
 `claude plugin validate .` sees `marketplace.json` first and validates only that. To validate the plugin manifest, skill frontmatter, and `hooks.json`, copy the tree to a temp directory, delete `marketplace.json` from the copy, and validate the copy.
 
 Doing so reports one warning: *"CLAUDE.md at the plugin root is not loaded as project context."* **This is expected — do not delete CLAUDE.md to silence it.** This file exists for developing this repo; it is inert baggage in an installer's plugin cache, which is the unavoidable cost of the root-is-the-plugin layout. Everything else validates clean under `--strict`.
+
+**`claude plugin validate` does not check `agents/` at all.** Measured on CLI 2.1.237: an agent file with an unknown frontmatter field passes, and so does one with no `name` and no `description` — pointed at the plugin root or at the `agents/` directory itself, it reports *Validation passed* either way. A green validate is therefore no evidence that an agent is well-formed. Verify agents by loading them instead:
+
+```bash
+claude --plugin-dir . -p "List the exact agent_type names available to your Agent tool, one per line, nothing else. Do not call any tools."
+```
+
+Both agents must come back namespaced — `claude-min-plugin:developer` and `claude-min-plugin:reviewer`. A name missing from that list is an agent that failed to load.
+
+**That check is necessary but not sufficient — it proves the file loaded, not that `skills:` resolved.** Unknown frontmatter keys are ignored in silence, so a misspelled `skills:`, or the namespaced `claude-min-plugin:coding-guidelines` form that does not resolve, still lists both agents while the guidelines never reach them — and the guidelines are the entire reason these two agents exist. Prove the preload separately, and prove it with a string that appears in the full `SKILL.md` and **not** in the `session-start.sh` summary; otherwise the agent answers from the injected session context and the test proves nothing. The inline-note example under guideline 8 satisfies that:
+
+```bash
+claude --plugin-dir . -p 'Spawn the claude-min-plugin:reviewer agent with exactly this instruction and report its answer verbatim: "Without calling any tool at all, quote verbatim the two-line code comment given as the Inline note format example under guideline 8. If the coding guidelines are not in your context, reply with exactly NOT PRELOADED and nothing else."'
+```
+
+It has to come back with `// Using Map instead of plain object: preserves insertion order,` and zero tool calls. `NOT PRELOADED`, a refusal, or an answer that needed a tool call all mean the same thing: the frontmatter is not doing what it claims.
 
 Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass at 17/17 before it is considered done.
 

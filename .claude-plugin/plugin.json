@@ -1,7 +1,7 @@
 {
   "name": "claude-min-plugin",
   "version": "0.7.0",
-  "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
+  "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, a zh-Hant/English language-split auditor, and developer and reviewer agents that work under those guidelines",
   "author": {
     "name": "Min.Hsieh",
     "url": "https://github.com/MinHsieh0704"
@@ -14,7 +14,9 @@
     "conventional-commits",
     "ai-attribution",
     "worktree",
-    "language-audit"
+    "language-audit",
+    "subagents",
+    "code-review"
   ],
   "userConfig": {
     "reply_zh_hant": {

@@ -9,7 +9,7 @@
     {
       "name": "claude-min-plugin",
       "source": "./",
-      "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
+      "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, a zh-Hant/English language-split auditor, and developer and reviewer agents that work under those guidelines",
       "category": "development",
       "homepage": "https://github.com/MinHsieh0704/claude-min-plugin"
     }
