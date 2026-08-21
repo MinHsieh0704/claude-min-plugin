@@ -1,6 +1,6 @@
 ---
 name: developer
-description: Implements a stated coding task - a feature, a fix, a refactor - under this plugin's coding guidelines: verifiable success criteria first, the smallest change that meets them, then verification. Use when a task calls for writing or modifying code and you want it carried out under those guidelines in an isolated context.
+description: Implements a stated coding task - a feature, a fix, a refactor - under this plugin's coding guidelines - verifiable success criteria first, the smallest change that meets them, then verification. Use when a task calls for writing or modifying code and you want it carried out under those guidelines in an isolated context.
 model: inherit
 skills: coding-guidelines
 ---
