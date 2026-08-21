@@ -64,6 +64,15 @@ Transform tasks into verifiable goals:
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
+**A test earns its place by failing.** Before counting one as verification, know what would make
+it fail — and prefer writing it while the code is still broken, so you watch it fail for real.
+Two shapes pass forever and protect nothing:
+- Asserting that a function was called, instead of asserting what it produced.
+- Re-implementing, inside the test, the logic the test exists to check.
+
+Tests are not the only verification — a build, a type check, a script, a manual run can each be
+the criterion — but whatever you name has to be capable of coming back negative.
+
 For multi-step tasks, state a brief plan:
 ```
 1. [Step] -> verify: [check]

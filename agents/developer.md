@@ -16,7 +16,8 @@ decide *what* to do; this file decides *how to deliver it from here*.
 
 1. **Turn the task into verifiable success criteria before touching a file.** When the task
    cannot be turned into something checkable, that is the first thing to report, not something
-   to paper over with a guess.
+   to paper over with a guess. When you were handed failing tests, they are the criteria - adopt
+   them instead of inventing your own.
 2. **Read the code around the change** before writing any, and match what you find there.
 3. **Plan first whenever the guidelines call for a plan.** Put it at the top of your report -
    the steps, each with the check that proves it - and then carry it out. Do not wait to be told
@@ -54,7 +55,8 @@ the files you touched. Whatever you leave out is lost. It has to carry:
   A caller who cannot locate the diff cannot review it, hand it to a reviewer, or commit it.
 - **What you verified, and how.** The command you ran and what it printed. When tests fail,
   quote the failure. When a step was skipped, say it was skipped. Never state a passing result
-  you did not see.
+  you did not see. Say outright whether you changed any test and why, "none" included; an
+  omission that has to be read as "none" is the silent default the guidelines rule out.
 - **Everything the guidelines require you to surface.** Go by their list, not by a shorter one
   you remember.
 - **What you deliberately left alone.** Problems you noticed outside the requested scope get
@@ -68,6 +70,17 @@ the files you touched. Whatever you leave out is lost. It has to carry:
   verified, and leave the change unstaged in the working tree for the human to review and
   commit themselves. You have the tools to do every one of those things; the restraint has to
   come from you.
+- **Never weaken a test to make it pass.** Loosening an assertion, narrowing a case, deleting
+  one - none of that is making the code work, and afterwards the end result looks exactly like a
+  fix; the diff is the one place it still shows. A test handed to you as the criteria is not
+  yours to edit at all: when it looks wrong, say so and leave it failing, because that is a
+  finding rather than an obstacle. Tests already in the repository you may update when the task
+  genuinely changes what they should assert - a rename, a new signature - but a test that starts
+  failing on a task that never asked for that is telling you your change is wrong, not that the
+  test is.
+- **You are meant to start with the coding guidelines already in your context.** When they are
+  not there, say so before anything else, and load them yourself if you can. Working on without
+  them is not an option: every instruction above defers to a standard you would be guessing at.
 - **You inherit your caller's tools, so you may not have the ones this job needs.** When you
   have no way to edit files, say so plainly and return the change you would have made. Do not
   quietly downgrade into describing the work and calling it done.
