@@ -12,7 +12,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines, which reach each session through the `session-start.sh` summary plus `/claude-min-plugin:coding-guidelines` on demand. **Never create a second copy.**
 
-`hooks-handlers/session-start.sh` embeds a *derived* one-line paraphrase of each of the ten guidelines. It is **not** a copy of their headings and taglines: most of those lines are built out of the guideline's body, and several share almost no wording with the tagline above them. So the trigger for regenerating it by hand is a change to what a guideline *says*, not a change to its heading — and because nothing in the handler is a literal quote, there is no string you could grep for to find what a given edit affected. Nothing detects drift between the two.
+`hooks-handlers/session-start.sh` embeds a *derived* one-line paraphrase of each of the ten guidelines. It is **not** a copy of their headings and taglines: most of those lines are built out of the guideline's body, and several share almost no wording with the tagline above them. So the trigger for regenerating it by hand is a change to what a guideline *says*, not a change to its heading — and because nothing in the handler is a literal quote, there is no string you could grep for to find what a given edit affected. `hooks-handlers/tests/test-session-start.sh` is what catches that instead of a promise to remember: it asserts each summary line still opens with its guideline's title, and it holds a hash of every guideline's body, so editing one turns the suite red until a human has re-read that summary line and pasted the new hash in. Rewriting the summary is still a judgement only a person makes; the test is only what stops the judgement from being skipped.
 
 Both agents in `agents/` reach the guidelines the other way — by *reference*, through `skills: coding-guidelines` in their frontmatter, which loads the whole 185-line file into the agent's context at startup with no tool call. The bare skill name is what resolves for a plugin's own skill; the namespaced `claude-min-plugin:coding-guidelines` form is not what that field takes. This is deliberately a reference and not a restatement: an agent that spelled the rules out again would be one more derived copy on a pile that already holds the `session-start.sh` summary, the `README.md` language table, and the `README.md` Agents table — that last one restates both agent definitions in zh-Hant and has to be edited in lockstep with every change to `agents/*.md`, with nothing to detect its drift. Keep it that way — an agent may say which *kinds* of guideline apply to its job, but must never hard-code rule numbers or re-list the rules themselves.
 
@@ -45,6 +45,7 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
+bash hooks-handlers/tests/test-session-start.sh   # expect 25/25 - summary vs SKILL.md
 git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
@@ -73,6 +74,8 @@ claude --plugin-dir . -p 'Spawn the claude-min-plugin:reviewer agent with exactl
 Both have to come back with those two lines exactly as they stand in `SKILL.md`, and with zero tool calls. Open `SKILL.md` to compare — **do not paste the expected answer into this file.** An answer written down here is one the agent may be able to read rather than recall, which is requirement (b) again and is how a probe quietly stops testing anything. `NOT PRELOADED`, a refusal, or an answer that needed a tool call all mean the same thing: the frontmatter is not doing what it claims.
 
 Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass at 17/17 before it is considered done.
+
+Any change to `skills/coding-guidelines/SKILL.md` or to `hooks-handlers/session-start.sh` requires `test-session-start.sh` to pass at 25/25. When it fails on a hash, that is the tripwire working: re-read the summary line it names, decide whether it still describes the guideline, edit it if not, and only then paste the new hash into that test's `EXPECTED` table. There is deliberately no flag that updates the hashes for you.
 
 ## Commit convention
 

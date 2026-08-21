@@ -180,6 +180,7 @@ trailer 的 `fix` commit，並在出現 `Co-Authored-By: Claude` 卻缺少 `AI-C
 ```bash
 claude plugin validate . --strict
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg
+bash hooks-handlers/tests/test-session-start.sh
 ```
 
 ## 授權
