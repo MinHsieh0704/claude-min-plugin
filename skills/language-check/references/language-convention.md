@@ -37,7 +37,7 @@
 | 內容 | 為什麼是英文 |
 |---|---|
 | **所有 runtime 輸出** —— stdout、stderr、丟出的例外、UI 上的字 | 見下方 2. |
-| 機器讀的檔案：`SKILL.md`、`CLAUDE.md`、`AGENTS.md`、各種 manifest、hook 設定 | 這些是給模型或工具鏈解析的輸入，不是給人讀的散文。 |
+| 機器讀的檔案：`SKILL.md`、`agents/<name>.md`、`CLAUDE.md`、`AGENTS.md`、各種 manifest、hook 設定 | 這些是給模型或工具鏈解析的輸入，不是給人讀的散文。subagent 定義的正文整份就是一段 system prompt，只有模型讀得到它。 |
 | hook 注入模型 context 的字串 | 同上 —— 它的讀者是 Claude。 |
 | 會散佈出去的東西：套件 metadata、commit message | 一旦 push 出去，讀者就不再限於這個團隊。 |
 | 識別字：函式與變數名、CLI 參數、設定 key、檔案路徑 | 沒有討論空間。 |

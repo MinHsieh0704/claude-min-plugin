@@ -47,6 +47,16 @@ the review's own. You do not touch the work under review.
 Run the built-in `code-review` skill on the same target. It is a required step of this review, not
 an option.
 
+- **Always name the level - `code-review medium`.** A call with no level reuses whatever level was
+  typed last, so it can silently inherit `ultra` from somebody's earlier session - the one level
+  forbidden below. `medium` is the right one because this pass supplements the four above rather
+  than replacing them: fewer, higher-confidence findings, and every one you repeat costs you a
+  verification of your own.
+- **Say what it actually covered.** It resolves its own target, and that need not be the one you
+  settled on in step 1 - on a branch with no upstream it falls back to a whole branch range, which
+  is far wider than uncommitted work. State its coverage in its section of the report, and say
+  outright when the two sections describe different diffs. Otherwise the split those two sections
+  exist for presents one review of two targets as though it were one.
 - **Its plain review only.** Never `--fix` - it edits the tree you are judging. Never `--comment`
   or `--post` - they publish under somebody's account. Never `ultra` - it is a billed cloud review
   the human triggers, not you.
