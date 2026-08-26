@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (the result of one review pass). Four subcommands - init, change, decide, review. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, or when ruling on a pending proposal.
+description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (a ledger of numbered review findings and the passes that raised them). Four subcommands - init, change, decide, review. Every entry carries a stable id, the files are appended to rather than overwritten, and a coordinator rules on one entry by naming its number. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, or when ruling on a numbered proposal or finding.
 ---
 
 # Workflow documents
@@ -14,15 +14,24 @@ seen the other's reasoning.
 |---|---|---|
 | `.workflow/TASKS.md` | The only formal specification | The coordinator, and only the coordinator |
 | `.workflow/TASK-CHANGES.md` | Change proposals awaiting a decision | Anyone may propose, only the coordinator decides |
-| `.workflow/REVIEW.md` | The result of one review pass | Whoever performed that review |
+| `.workflow/REVIEW.md` | A ledger of review findings, and the passes that raised them | Whoever reviewed, plus the coordinator's rulings |
 
 **The coordinator is whoever owns the task** - normally the human, or the main session working
 directly with them. Implementer and reviewer roles are never coordinators.
 
 They live under `.workflow/` rather than at the repository root so they never collide with a
 `TASKS.md` the project already had, and so a reviewer's write whitelist can be drawn as a path
-prefix. All three belong in version control. `REVIEW.md` is overwritten on each pass - its history
-lives in git, not in accumulated sections.
+prefix. All three belong in version control.
+
+**The two ledgers are appended to, never overwritten.** `TASK-CHANGES.md` and `REVIEW.md` only ever
+grow - a later pass adds to what is already there, the only in-place edit is recording a ruling on
+an entry that already exists, and no entry is ever deleted. **`TASKS.md` is the exception and is
+meant to be**: it is the spec rather than a ledger, the coordinator owns it, and `decide` folds
+accepted wording straight into it instead of appending a correction after the thing it corrects.
+
+Overwriting a ledger would make every ruling in it depend on somebody having committed the file
+between passes. The coordinator can commit; neither agent can, and nothing in this workflow tells
+anyone to - so a ledger that survives only when it happened to be committed does not survive.
 
 **Language follows whichever of the three already exists.** Read the ones that are present and write
 in the language they use; a task whose spec is in one language and whose review is in another is
@@ -45,8 +54,13 @@ stop** - never guess which one was meant.
 |---|---|---|
 | `init` | Turn an approved plan into `.workflow/TASKS.md` | The coordinator |
 | `change` | Append the next `TCR-nnn` as `PENDING` | Any role |
-| `decide` | Rule on a pending `TCR-nnn` | The coordinator only |
-| `review` | Write `.workflow/REVIEW.md` from a review that was performed | Whoever reviewed |
+| `decide` | Rule on a pending `TCR-nnn`, or on an open `F-nnn` | The coordinator only |
+| `review` | Append a pass to `.workflow/REVIEW.md` from a review that was performed | Whoever reviewed |
+
+**Every entry in `TASK-CHANGES.md` and `REVIEW.md` carries an id** - `TCR-nnn` for a change
+proposal, `F-nnn` for a finding. Ids are allocated from the highest already present in that file,
+and are **never reused and never renumbered**, so one id names one thing for the life of the task
+and a person can rule on it by saying its number and nothing else.
 
 ### `init`
 
@@ -68,19 +82,48 @@ decision.
 
 ### `decide`
 
-Coordinator only. Set the entry's `Status` and `Decision`.
+Coordinator only. Rules on one entry, named by its id. Two id namespaces, one verb.
+
+**A `TCR-nnn` in `TASK-CHANGES.md`**:
 
 - `ACCEPTED` - fold the proposed wording into `.workflow/TASKS.md` and append one line to its
   `Change history`.
 - `REJECTED` - nothing in `TASKS.md` moves.
 
-Either way the entry stays in the ledger. A rejected proposal is a decision worth being able to
-find later, not a mistake to erase.
+**An `F-nnn` in `REVIEW.md`**:
+
+- `FIXED` - it was addressed. Name the commit where there is one.
+- `WONTFIX` - a deliberate decision not to act on it.
+- `DEFERRED` - real, but not now.
+
+**Set `Status` in place, and append one dated line under `Decision` giving the reason** - never
+replace what is already there. `Decision` is a running log, so an entry ruled on more than once
+shows every ruling and the order they came in, and a finding that is reopened later still carries
+the reasoning that closed it. Nothing else in the entry is rewritten and no entry is ever deleted.
+A `REJECTED` proposal and a `WONTFIX` finding are both decisions worth being able to find later,
+not mistakes to erase - and until one is written down, the next pass raises the same thing again
+with no way to tell that it was already answered.
 
 ### `review`
 
-Write `.workflow/REVIEW.md` in the shape below, from the review that was actually performed.
-**Never write a verdict for a review that did not run.**
+Append a pass to `.workflow/REVIEW.md` in the shape below, from the review that was actually
+performed, creating the file if it does not exist. **Never write a verdict for a review that did
+not run.**
+
+**Read the findings already in the file before writing any.** A defect you can still reproduce
+keeps the `F-nnn` it already has; only something genuinely new takes the next id. Re-raising an old
+defect under a new id is how a ruling gets lost and how the same argument gets had twice.
+
+**Reopening.** A finding marked `FIXED` that you can still reproduce goes back to `Status: OPEN`,
+with a line appended under its `Decision` naming this pass and what you saw. `WONTFIX` and
+`DEFERRED` are the coordinator's calls - leave them exactly where they are however much you
+disagree, and put the disagreement in your report instead.
+
+**When `REVIEW.md` is already there in a shape this skill does not describe** - written before these
+conventions, or by hand - do not rewrite it and do not give its findings ids. Append the new ledger
+below it, with one line saying where the old content ends and why what is above carries no ids. An
+id is a promise that somebody verified the thing it names; putting one on a finding you have not
+re-verified spends that promise on something you never saw.
 
 ## `.workflow/TASKS.md`
 
@@ -154,37 +197,71 @@ to stop. Do whatever does not depend on the answer, and say in your report that 
 
 ## `.workflow/REVIEW.md`
 
+Two halves. The **findings ledger** is the living register - findings accumulate there, and their
+`Status` and `Decision` are the only things `decide` ever touches. The **pass log** under it records
+what each review actually did, and never changes once written.
+
 ```md
 # Review
 
+## Findings - manual review
+
+### F-001
+Status: OPEN | FIXED | WONTFIX | DEFERRED
+Severity: Blocking | Should fix | Consider
+Task: T1 | none
+Where: path/to/file.ext:42
+Raised: pass 1, 2026-08-25
+
+The defect in one sentence, then the concrete input or state that triggers it and what goes wrong.
+
+Decision:
+<absent until the first ruling. One appended line per ruling, newest last - so a finding that was
+closed and later reopened still carries the reasoning that closed it.>
+
+### F-002
+...
+
+## Findings - /code-review
+
+### F-003
+<Same fields.>
+
+## Passes
+
+### Pass 1 - 2026-08-25
 Verdict: PASS | FAIL | TASK_UPDATE_REQUIRED
 Task: T1
 Target: <the diff, branch, commit range, or paths that were reviewed>
-Date: 2026-08-25
+code-review: <the level it ran at and what it actually covered> | not run - <why>
+Raised: F-001, F-002, F-003 | none
+Required fixes: <the F-nnn that must be addressed before this can pass> | none
+TASKS.md update needed: yes - <TCR ids> | no
 
-## TASKS.md compliance
+#### TASKS.md compliance
 One line per acceptance criterion - met, not met, or cannot judge.
 
-## Findings - manual review
-## Findings - /code-review
-<Both sections grouped Blocking, then Should fix, then Consider. Every finding anchored to
-file:line, with the concrete input or state that triggers it, and the requirement it maps to
-or "none". Say plainly when a section found nothing. When /code-review could not be run, say so
-and why in its section - never leave it silently empty.>
-
-## Verification
+#### Verification
 What was actually run and what it printed. Say plainly what could not be run.
 
-## Required fixes
-The findings that must be addressed before this can pass, by task id where they map to one.
-
-## TASKS.md update needed?
-yes - <TCR ids> | no
+### Pass 2 - 2026-08-26
+...
 ```
+
+**Findings sit in id order, oldest first** - append-only and severity-ordered cannot both hold once
+a second pass adds a `Blocking` finding below existing `Consider` ones, and of the two, append-only
+is the one the rulings depend on. `Severity:` is the field a reader sorts or greps by. Every finding
+is anchored to `file:line` with the concrete case that triggers it, and ids are unique across both
+sections, so `F-003` names one finding no matter which section it sits in.
 
 Keeping the two finding sections apart is what makes the review auditable - `/code-review` is one
 input to the pass, not the pass itself, and a reader has to be able to tell which findings a human
-process produced.
+process produced. **When `/code-review` could not be run, that belongs in the pass entry's
+`code-review` line, not in this section** - it is a fact about one pass, and a missing pass that
+reads as "found nothing" is this step's one failure.
+
+A pass's `Verdict` describes that pass and stays as written. **What is true now is the ledger** -
+an open `Blocking` finding is open whatever the last pass concluded.
 
 The three verdicts:
 

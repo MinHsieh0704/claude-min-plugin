@@ -45,6 +45,10 @@ A `.workflow/REVIEW.md` naming your task is a work order, and its verdict says w
 - **`TASK_UPDATE_REQUIRED`** - the spec is silent on the point. Do not start coding a guess.
   Propose the missing wording through `/claude-min-plugin:workflow change` and stop there.
 
+**Work only the findings whose `Status` is `OPEN`.** `WONTFIX` and `DEFERRED` are rulings the
+coordinator has already made - acting on one spends effort on work somebody decided against and
+quietly overturns their decision. Name every `F-nnn` you addressed in your report.
+
 Reproduce a finding before you believe it, and re-run it after you fix it. Report one you could not
 reproduce as unreproduced - fixing something you never saw fail leaves you unable to say whether
 anything improved.

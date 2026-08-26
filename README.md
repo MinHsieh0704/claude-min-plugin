@@ -26,7 +26,7 @@ claude --plugin-dir /path/to/this/repo
 | `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
-| `/claude-min-plugin:workflow` | 維護三份把任務從規格帶到驗收的文件，全部放在 `.workflow/`：`TASKS.md`（唯一正式規格，只有協調者能改）、`TASK-CHANGES.md`（待決的需求變更提案，任何角色都能提、只有協調者能決）、`REVIEW.md`（一次審查的結果，帶 `PASS` / `FAIL` / `TASK_UPDATE_REQUIRED` 判定）。四個子指令：`init`（把已核准的 plan 轉成 `TASKS.md`）、`change`（提案）、`decide`（裁決）、`review`（記錄審查）。 |
+| `/claude-min-plugin:workflow` | 維護三份把任務從規格帶到驗收的文件，全部放在 `.workflow/`：`TASKS.md`（唯一正式規格，只有協調者能改）、`TASK-CHANGES.md`（待決的需求變更提案，任何角色都能提、只有協調者能決）、`REVIEW.md`（findings 的 ledger，加上每一趟審查的 `PASS` / `FAIL` / `TASK_UPDATE_REQUIRED` 判定）。四個子指令：`init`（把已核准的 plan 轉成 `TASKS.md`）、`change`（提案）、`decide`（裁決一筆 `TCR-nnn` 或一條 `F-nnn`）、`review`（追加一趟審查）。三份文件**只追加、不覆寫**，每一筆都有永不重用的編號（`TCR-nnn` / `F-nnn`），所以你只要報號碼就能裁決；findings 帶 `OPEN` / `FIXED` / `WONTFIX` / `DEFERRED` 狀態，「這條不處理」與「這條之後再說」都留得下來，下一趟審查不會再問你一次。 |
 
 ## 開發流程
 
@@ -40,6 +40,9 @@ plan mode → TASKS.md → @developer → 程式碼 → @reviewer → REVIEW.md
                 ↑                                              │
                 └──── decide ←── TASK-CHANGES.md ←─────────────┘
 ```
+
+`REVIEW.md` 裡的每一條 finding 也走 `decide`：你報一個 `F-nnn`，判它 `FIXED` /
+`WONTFIX` / `DEFERRED`。判過的會留在 ledger 裡，下一趟審查不會再拿同一件事問你一次。
 
 **規格只有一個寫入者。** 能改規格的實作者可以把規格降到自己過關為止 —— 規格要 A，A 很難，
 規格變成 B，B 做出來了，B 通過審查；沒有人說謊，diff 上也留不下任何痕跡。所以 developer 與
