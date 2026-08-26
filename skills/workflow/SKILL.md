@@ -24,6 +24,12 @@ They live under `.workflow/` rather than at the repository root so they never co
 prefix. All three belong in version control. `REVIEW.md` is overwritten on each pass - its history
 lives in git, not in accumulated sections.
 
+**Language follows whichever of the three already exists.** Read the ones that are present and write
+in the language they use; a task whose spec is in one language and whose review is in another is
+harder to read than either. When none exists yet, write English. A reader-based rule cannot settle
+this on its own, because these files have two readers at once - the human coordinator and the two
+agents - so the first file written decides it for the rest.
+
 **Why the implementer may not edit `TASKS.md`.** A role that can rewrite the spec can lower it,
 and the failure looks exactly like success: the spec asks for A, A turns out to be hard, the spec
 becomes B, B gets built, B passes review. Nobody lied and nothing is left in the diff to find. So
