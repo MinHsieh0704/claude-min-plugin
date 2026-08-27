@@ -71,6 +71,15 @@ claude --plugin-dir . -p 'Spawn the claude-min-plugin:developer agent with exact
 
 Run the same for `claude-min-plugin:reviewer`. Both have to come back with those two lines exactly as they stand in `SKILL.md`, and with zero tool calls. Open `SKILL.md` to compare — **do not paste the expected answer into this file.** An answer written down here is one the agent may be able to read rather than recall, which is requirement (b) again and is how a probe quietly stops testing anything. `NOT PRELOADED`, a refusal, or an answer that needed a tool call all mean the same thing: the frontmatter is not doing what it claims. Probe the second preloaded skill the same way, with a phrase unique to `skills/workflow/SKILL.md`.
 
+**The third of those signals is invisible from the probe's output, so read the transcript.** A caller sees an agent's reply and nothing else — not its tool calls — and the probe text names where the answer lives, so an agent whose preload is broken can simply open `SKILL.md` and come back word-perfect. Every call is recorded regardless: a run writes `~/.claude/projects/<cwd-slug>/<session-id>/subagents/agent-*.jsonl`, one per spawned agent, each with a `.meta.json` beside it naming its `agentType` and `spawnDepth`. Find the newest session directory under the slug for the directory you ran in, then read what the agent actually did:
+
+```bash
+grep -o '"name":"[A-Za-z]*"' <agent>.jsonl | sort | uniq -c        # every tool it called
+grep -o '"name":"Skill","input":{[^}]*}' <agent>.jsonl             # and with which arguments
+```
+
+A preload probe passes only when the first command prints nothing. These files are also how any other claim an agent makes about itself gets checked — that it ran `/code-review`, at which level, that it wrote only the files it was allowed to. **The report is a claim; the transcript is the record.**
+
 Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass at 17/17 before it is considered done.
 
 ## Commit convention

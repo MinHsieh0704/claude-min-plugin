@@ -48,6 +48,11 @@ plan mode → TASKS.md → @developer → 程式碼 → @reviewer → REVIEW.md
 規格變成 B，B 做出來了，B 通過審查；沒有人說謊，diff 上也留不下任何痕跡。所以 developer 與
 reviewer 都不能碰 `TASKS.md`，發現缺口一律走 `TASK-CHANGES.md` 提案，由你裁決。
 
+**不建議並行跑這兩個 agent。** `TCR-nnn` 與 `F-nnn` 都是「掃出檔案內目前最大值再加一」配發的，
+兩個 session 同時提案就會各自算出同一個號碼、各自寫進去，之後 `decide` 講不清自己裁決的是哪一
+筆，而編號永不重用的保證也就沒了。這套流程要的是**產出物**而不是對話 —— 那讓實作端與審查端能在
+各自獨立的 session 裡跑，但它們是**輪流**跑，不是同時。
+
 ## Agents
 
 安裝後以命名空間出現在 `@` 選單：`@claude-min-plugin:developer`、`@claude-min-plugin:reviewer`。
