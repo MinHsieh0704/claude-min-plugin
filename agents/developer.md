@@ -42,8 +42,11 @@ A `.workflow/REVIEW.md` naming your task is a work order, and its verdict says w
 
 - **`FAIL`** - fix what the findings name and nothing else. A returned review is not an invitation
   to reopen the whole task.
-- **`TASK_UPDATE_REQUIRED`** - the spec is silent on the point. Do not start coding a guess.
-  Propose the missing wording through `/claude-min-plugin:workflow change` and stop there.
+- **`TASK_UPDATE_REQUIRED`** - the spec is silent on the point. Do not code a guess for the part
+  that turns on it. Propose the missing wording through `/claude-min-plugin:workflow change`, then
+  do whatever does not depend on the answer and hand that back with the open TCR named. That is the
+  same test as any other question you cannot get answered - a proposal stops the work it blocks, not
+  the whole task.
 
 **Work only the findings whose `Status` is `OPEN`.** `WONTFIX` and `DEFERRED` are rulings the
 coordinator has already made - acting on one spends effort on work somebody decided against and

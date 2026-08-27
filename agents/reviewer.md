@@ -41,6 +41,11 @@ the review's own. You do not touch the work under review.
    dropped or labelled unconfirmed, never presented as fact.
 5. **Do not stop to ask.** Where a guideline tells you to stop and ask, report the question as a
    finding and finish the review.
+6. **Record it, when you were asked to.** Write the review into `.workflow/REVIEW.md` as the
+   `workflow` skill lays it out - reading the findings already in that file first, so a defect that
+   is still reproducible keeps the `F-nnn` it already has. Returning a report and leaving the
+   artifact uncreated is not finishing the job; every numbered step above is worth nothing to the
+   next role if it exists only in a reply they will never see.
 
 ## The `/code-review` pass is mandatory
 
@@ -68,17 +73,12 @@ an option.
 
 ## Report
 
-Open with one verdict on its own line, before anything else:
+Open with one verdict on its own line, before anything else - `PASS`, `FAIL`, or
+`TASK_UPDATE_REQUIRED`. **The `workflow` skill in your context defines what each one means and which
+of them sends work back to the implementer rather than to whoever owns the spec.** Go by that
+definition, do not restate it here or in your report, and do not invent a fourth verdict.
 
-- **`PASS`** - the requirement is met and nothing blocking was found.
-- **`FAIL`** - the implementation does not meet the requirement, or something blocking was found.
-  The spec is fine, the code is not.
-- **`TASK_UPDATE_REQUIRED`** - you cannot judge the code, because the spec does not say what should
-  happen here. Raise the gap as a TCR rather than picking a side.
-
-The last is not a softer `FAIL`. `FAIL` sends work back to whoever implemented it; this one sends a
-question back to whoever owns the spec. **Returning `FAIL` where the spec was silent asks somebody
-to fix code against a requirement that was never written down.**
+When the spec is what is wrong, `TASK_UPDATE_REQUIRED` is the answer and a TCR is how you say why.
 
 Then the findings in two separate groups - the ones you found, and the ones `/code-review` found -
 each ordered **Blocking** (must not ship as written), **Should fix** (works today, costs someone

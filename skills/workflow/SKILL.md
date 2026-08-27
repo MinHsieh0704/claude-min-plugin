@@ -69,7 +69,11 @@ approved, then this. When a plan file path is given as a further argument, read 
 
 **Never create the file from a conversation nobody approved.** One `T<n>` section per separately
 implementable piece. When `.workflow/TASKS.md` already exists, say so and stop rather than
-overwriting a spec that work may already be running against.
+overwriting a spec that work may already be running against - and say what to do instead, because
+stopping is not a refusal: **adding `T4` to a live spec is the coordinator editing the file by
+hand.** They own it, so that is the normal route rather than a violation. No subcommand appends a
+task, because deciding which parts of a plan are new is a judgement, and guessing it wrong
+duplicates or drops a requirement with nothing to catch either.
 
 ### `change`
 
@@ -140,7 +144,6 @@ What must stay true. Compatibility, performance budgets, things that must not ch
 Language, framework, existing modules to reuse, interface contracts to honour.
 
 ## T1 - <short title>
-Status: TODO | IN PROGRESS | DONE
 
 ### Requirement
 What must be true when this is done. Behaviour, not steps.
@@ -167,6 +170,12 @@ every reference that already exists.
 people will read differently. When a criterion cannot be made checkable, write that down under it -
 an acknowledged gap is workable, a vague criterion is not.
 
+**A task carries no status field, deliberately.** Whether `T1` is finished is already recorded in
+`REVIEW.md` - a pass that returned `PASS` for it with no `OPEN` finding left against it - and a
+second copy here would be one nobody maintains, since only the coordinator may write this file and
+no subcommand touches a task's status. A field that reads as authoritative and is permanently stale
+is worse than no field at all.
+
 ## `.workflow/TASK-CHANGES.md`
 
 ```md
@@ -189,7 +198,9 @@ The wording to add or replace, concrete enough to be pasted into TASKS.md.
 What else this touches - behaviour, callers, tests, other tasks.
 
 ### Decision
-PENDING
+<absent until ruled on. One appended line per ruling, newest last - the same running log the
+findings ledger keeps, so `Status` holds the state and `Decision` holds the reasoning and how it
+got there.>
 ```
 
 Three states only. **Propose, then keep working where you can** - a change proposal is not a reason
