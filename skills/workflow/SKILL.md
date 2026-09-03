@@ -14,7 +14,7 @@ seen the other's reasoning.
 |---|---|---|
 | `.workflow/TASKS.md` | The only formal specification | The coordinator, and only the coordinator |
 | `.workflow/TASK-CHANGES.md` | Change proposals awaiting a decision | Anyone may propose, only the coordinator decides |
-| `.workflow/REVIEW.md` | A ledger of review findings, and the passes that raised them | Whoever reviewed, plus the coordinator's rulings |
+| `.workflow/REVIEW.md` | A ledger of review findings, and the passes that raised them | Whoever reviewed, the implementer in its own section, plus the coordinator's rulings |
 
 **The coordinator is whoever owns the task** - normally the human, or the main session working
 directly with them. Implementer and reviewer roles are never coordinators.
@@ -68,9 +68,16 @@ used them without invoking anything. **A ledger written to spec by a role that n
 overwritten instead of appended to, or a ruling made by someone other than the coordinator.
 
 **Every entry in `TASK-CHANGES.md` and `REVIEW.md` carries an id** - `TCR-nnn` for a change
-proposal, `F-nnn` for a finding. Ids are allocated from the highest already present in that file,
-and are **never reused and never renumbered**, so one id names one thing for the life of the task
-and a person can rule on it by saying its number and nothing else.
+proposal, `F-nnn` for a finding. Ids are **never reused and never renumbered**, so one id names one
+thing for the life of the task and a person can rule on it by saying its number and nothing else.
+
+**Allocate from the file's `Ids issued through` line, not from the entries you can see.** Each
+ledger carries that line under its top heading - `Ids issued through: F-000` in a new file - and the
+next id is one past it; writing an entry advances it. Counting the entries present would be the
+obvious rule and it is wrong, because `trim` removes entries: after the ruled-on `F-002` and `F-003`
+are gone, the highest one visible is `F-001` and the next finding would silently become a second
+`F-002`. A ruling recorded against `F-002` would then name two unrelated defects, which is exactly
+what "never reused" exists to prevent.
 
 ### `init`
 
@@ -128,7 +135,8 @@ an assertion, and the next pass has nothing to argue with except the finding its
 **Set `Status` in place, and append one dated line under `Decision` giving the reason** - never
 replace what is already there. `Decision` is a running log, so an entry ruled on more than once
 shows every ruling and the order they came in, and a finding that is reopened later still carries
-the reasoning that closed it. Nothing else in the entry is rewritten and no entry is ever deleted.
+the reasoning that closed it. Nothing else in the entry is rewritten, and no entry is deleted by
+this or any other subcommand except `trim`.
 A `REJECTED` proposal and a `WONTFIX` finding are both decisions worth being able to find later,
 not mistakes to erase - and until one is written down, the next pass raises the same thing again
 with no way to tell that it was already answered.
@@ -143,6 +151,13 @@ not run.**
 keeps the `F-nnn` it already has; only something genuinely new takes the next id. Re-raising an old
 defect under a new id is how a ruling gets lost and how the same argument gets had twice.
 
+**A pass takes the next number after the highest that appears anywhere in the file** - in the pass
+log, or in any finding's `Raised:` line. Counting the entries in the log would be the obvious rule
+and it breaks on an interrupted review, which is required to leave its findings behind and write no
+pass entry: those findings already say `pass 3`, the log still ends at `Pass 2`, and the next
+reviewer would call itself `Pass 3` as well. Two different reviews would then share a number, and a
+finding would be attributed to a review it was never part of.
+
 **Reopening.** A finding marked `FIXED` that you can still reproduce goes back to `Status: OPEN`,
 with a line appended under its `Decision` naming this pass and what you saw. `WONTFIX` and
 `DEFERRED` are the coordinator's calls - leave them exactly where they are however much you
@@ -151,10 +166,14 @@ disagree, and put the disagreement in your report instead.
 **A review can end the task, and is meant to.** Apply these before writing the pass entry:
 
 - A pass with nothing `Blocking` and at most two `Should fix` is the task's last pass. Write
-  `Termination: budget met`, and **recommend** in the report that everything it raised below
-  `Should fix` be ruled `DEFERRED` - naming the ids. Recommending is as far as this goes: setting
-  that `Status` is `decide`, and `decide` is the coordinator's. A reviewer who rules on its own
-  findings has closed its own review.
+  `Termination: budget met`, and **recommend a ruling for every finding it leaves `OPEN`** - naming
+  the ids, and naming which ruling: `WONTFIX` for anything the level or `Out of scope` put outside
+  scope, matching what `decide` calls the expected outcome there, and `DEFERRED` for what is real
+  and worth doing but outside this budget. Cover the `Should fix` ones too, not only what sits below
+  them: a task cannot be both over and carrying open findings, and those are the ones a later reader
+  will assume somebody is still working on. Recommending is as far as this goes - setting a `Status`
+  is `decide`, and `decide` is the coordinator's. A reviewer who rules on its own findings has
+  closed its own review.
 - When this pass raised as many findings as the one before it or more, write
   `Termination: DIMINISHING RETURNS` and say so on the report's second line, straight after the
   verdict. It is a signal to the human - narrow the scope or accept the work as it stands - not a
@@ -162,10 +181,19 @@ disagree, and put the disagreement in your report instead.
   it never carries this.
 - When the passes the `Rigor` level allows, or an explicit `Review budget`, are spent, no further
   pass is written. A reviewer asked for one anyway records the refusal and the budget instead.
+- **A pass that returns `FAIL` does not spend the budget.** The budget limits how many times the
+  work is reviewed *afresh*, not how many times a named fix is confirmed - counting a `FAIL` would
+  make `low`, which allows one pass, unable to finish any task that fails once: the only pass it
+  permitted said `FAIL`, and a finished task needs a `PASS`. A pass that only re-checks what a
+  previous `FAIL` named writes `Termination: confirming <F-nnn>` and reviews nothing else. Three
+  consecutive `FAIL`s on one task is `DIMINISHING RETURNS` and goes back to the human.
 - A finding against the test apparatus itself - a fixture, a mutant, a harness, a guard on another
-  guard - takes the severity the `Rigor` table gives it. *Could this test pass while the code is
-  broken?* has a yes answer for every finite suite, so it cannot be the thing that decides whether
-  reviewing ends; the severity cap is.
+  guard - takes **at most** the severity the `Rigor` table gives it, **unless you can name the
+  user-visible failure it lets through**, in which case it takes the severity that failure deserves.
+  *Could this test pass while the code is broken?* has a yes answer for every finite suite, so it
+  cannot be the thing that decides whether reviewing ends - but a suite that never runs its
+  assertions at all is not that question, it is a check that does not exist, and the cap is not a
+  licence to ship one.
 - A finding whose triggering situation is outside the level's scope, or is named under
   `Out of scope`, is `Consider`, and says which of the two put it there.
 
@@ -182,8 +210,14 @@ point, not only at the end - a ledger several times the size of the work it revi
 long before the task finishes, and where the repository root is a plugin it ships to every
 installer's cache.
 
-- **Delete** entries ruled `FIXED` or `ACCEPTED`. They record work now in the tree, and `git log -p`
-  on the file still finds any of them by id.
+**Commit the ledgers before trimming, and say so when you cannot.** This is the one operation that
+destroys what is written, and the only recovery is history - so the history has to exist first. The
+paragraph above rules out relying on a file that was committed only by luck; here the coordinator is
+both the one role that may run this and the one role that can commit, so the precondition is theirs
+to meet rather than a hope. On a repository where committing is not possible, do not trim.
+
+- **Delete** entries ruled `FIXED` or `ACCEPTED`. They record work that is now in the tree, and the
+  commit made just above still holds them.
 - **Keep** `OPEN`, `PENDING` and `DEFERRED`, and keep **`WONTFIX` and `REJECTED`** - the decisions
   *not* to act. Deleting those is how the next pass raises the same thing again with no way to tell
   it was already answered, which is the reason this file gives for writing them down at all.
@@ -191,6 +225,8 @@ installer's cache.
   the ground the ruling stood on. Process narration, quoted output and superseded discussion go; a
   `Decision` ruled on more than once collapses to the ruling that stands, dated.
 - **Cut the pass log to its last entry.** What is true now is the ledger, not the passes.
+- **Leave `Ids issued through` exactly as it is.** It is the only record that the deleted ids were
+  ever spent, so trimming it is how the next entry gets an id that already means something else.
 
 Never renumber - a `DEFERRED` finding that comes back has to come back as itself.
 
@@ -271,6 +307,7 @@ is worse than no field at all.
 
 ```md
 # Task changes
+Ids issued through: TCR-000
 
 ## TCR-001
 Status: PENDING | ACCEPTED | REJECTED
@@ -301,10 +338,11 @@ to stop. Do whatever does not depend on the answer, and say in your report that 
 
 Two halves. The **findings ledger** is the living register - findings accumulate there, and their
 `Status` and `Decision` are the only things `decide` ever touches. The **pass log** under it records
-what each review actually did, and never changes once written.
+what each review actually did; an entry is never edited once written, and only `trim` removes one.
 
 ```md
 # Review
+Ids issued through: F-000
 
 ## Findings - manual review
 
@@ -371,8 +409,15 @@ produced which finding. **When `/code-review` could not be run, that belongs in 
 that reads as "found nothing" is this step's one failure.
 
 **The implementer's section is the only one the implementer may write to**, and only by appending a
-finding - never a `Status`, never a `Decision`. Without it, a code defect found while building has
-nowhere to go but a free-form report, and a report is read once and then gone.
+finding, **creating the file with its headings when it does not exist yet** - which is the normal
+case, since implementation usually runs before any review. Without it, a code defect found while
+building has nowhere to go but a free-form report, and a report is read once and then gone.
+
+The finding it appends carries `Status: OPEN` like any other. **`OPEN` is the absence of a ruling,
+not a ruling** - writing it is how the entry becomes visible to `decide`, to `trim`, which sorts by
+`Status`, and to the next implementer, which works only what is `OPEN`. A finding with no `Status`
+at all is skipped by all three, which is the one outcome this section exists to prevent. Every other
+value is a ruling and belongs to the coordinator, and so does every `Decision` line.
 
 A pass's `Verdict` describes that pass and stays as written. **What is true now is the ledger** -
 an open `Blocking` finding is open whatever the last pass concluded.

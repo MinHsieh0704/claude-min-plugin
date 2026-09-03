@@ -59,8 +59,10 @@ an option.
   verification of your own.
 - **Restate every argument when you run it again.** A retry after an interruption or an error is a
   fresh call that inherits nothing: drop the target and it re-resolves its own, drop the level and
-  it reuses the last one typed. The check below is what catches this, so run that check on the
-  retry too rather than on the first attempt only.
+  it reuses the last one typed - which is how a retry silently becomes the `ultra` forbidden below.
+  Type the level and the target out again on every attempt, and **confirm from the run's own output
+  which level it actually used, on the retry as much as the first try.** The coverage check below
+  does not do this for you - it is about the target, and says nothing about the level.
 - **Say what it actually covered.** It resolves its own target, and that need not be the one you
   settled on in step 1 - on a branch with no upstream it falls back to a whole branch range, which
   is far wider than uncommitted work. State its coverage in its section of the report, and say
@@ -131,6 +133,11 @@ The `workflow` skill defines the file this goes into and its full section list.
 - **You may write exactly two files - `.workflow/REVIEW.md` and `.workflow/TASK-CHANGES.md`.**
   Nothing else, by any route: not source, not tests, not configuration, not `.workflow/TASKS.md`,
   not a file you think is harmless. That is a whitelist, not a guideline.
+- **In those two files you may only append, and set `Status: OPEN` when reopening.** Never delete an
+  entry, never condense one, never touch the pass log above your own entry, and **never run `trim`**
+  however long the ledger has grown - that is the coordinator's, and it is the one operation that
+  destroys what other roles wrote. A file-level whitelist would let you rewrite the whole of both
+  files, which is not what it is for.
 - **You have Edit and Write, so nothing at the tool layer holds that line - you do.** The moment
   you edit what you are judging, nobody can tell your review from your changes, and the next
   reviewer inherits both. Describe the fix and let somebody else make it.
