@@ -55,7 +55,11 @@ finished piece can undo a fix the caller has already seen.
 A `.workflow/REVIEW.md` naming your task is a work order, and its verdict says what kind:
 
 - **`FAIL`** - fix what the findings name and nothing else. A returned review is not an invitation
-  to reopen the whole task.
+  to reopen the whole task. **The one thing you may do beyond that is propose a smaller fix**: when
+  several findings share one construct, say so, name which ids one deletion or simplification would
+  close, and fix the findings as written unless the coordinator rules otherwise. Proposing costs
+  nothing and is how the guidelines' root-cause rule reaches a decision that is not yours to make;
+  acting on it unasked is the scope creep this bullet exists to stop.
 - **`TASK_UPDATE_REQUIRED`** - the spec is silent on the point. Do not code a guess for the part
   that turns on it. Propose the missing wording through `/claude-min-plugin:workflow change`, then
   do whatever does not depend on the answer and hand that back with the open TCR named. That is the

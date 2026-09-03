@@ -19,6 +19,7 @@ Before implementing:
 - State assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
+- **Any set of options you offer must include one that does less** — remove something, simplify, or don't do it at all. A menu where every option adds has already answered the question, and it answers it before anyone has gone looking for the simpler approach the bullet above asks for.
 - If something is unclear, stop. Name what's confusing. Ask.
 
 ---
@@ -33,6 +34,7 @@ Before implementing:
 - No error handling for impossible scenarios.
 - **When this collides with guideline 9** — a loud failure for a case that cannot reasonably occur — **this one wins**: one comment line saying the case is not handled, not a branch that handles it.
 - If you write 200 lines and it could be 50, rewrite it.
+- **Given a batch of review findings, group them by root cause before fixing any of them.** Several findings usually share one construct, and deleting that construct is a smaller change than adding a guard for each finding it produced. Working down the list in order hides the grouping, because each finding on its own reads as "something is missing here".
 
 Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
