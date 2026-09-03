@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (a ledger of numbered review findings and the passes that raised them). Invoked as /claude-min-plugin:workflow <init | change | decide | review | trim>, and with no subcommand it lists those five and stops. Every entry carries a stable id, the files are appended to rather than overwritten, and a coordinator rules on one entry by naming its number. A one-word Rigor level in the spec sets the budgets that let a task end. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, when ruling on a numbered proposal or finding, or when a ledger has grown past what is still live.
+description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (a ledger of numbered review findings and the passes that raised them). Invoked as /claude-min-plugin:workflow <init | change | decide | review | trim>, and with no subcommand it lists those five and stops. Every entry carries a stable id, the files are appended to rather than overwritten, and a coordinator rules on one entry by naming its number. A one-word Rigor level in the spec sets the budgets that let a task end. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, when ruling on a numbered proposal or finding, or when a ledger has grown too long to read.
 ---
 
 # Workflow documents
@@ -60,7 +60,7 @@ stop** - never guess which one was meant.
 | `change` | Append the next `TCR-nnn` as `PENDING` | Any role |
 | `decide` | Rule on a pending `TCR-nnn`, or on an open `F-nnn` | The coordinator only |
 | `review` | Append a pass to `.workflow/REVIEW.md` from a review that was performed | Whoever reviewed |
-| `trim` | Cut the ledgers back to what is still live | The coordinator only |
+| `trim` | Shorten every ledger entry without removing any | The coordinator only |
 
 **Two of these are tools, three are formats.** `init` and `trim` do work nobody can do by reading -
 call them. `change`, `decide` and `review` describe a shape to write in, and this file is already
@@ -151,12 +151,13 @@ not run.**
 keeps the `F-nnn` it already has; only something genuinely new takes the next id. Re-raising an old
 defect under a new id is how a ruling gets lost and how the same argument gets had twice.
 
-**A pass takes the next number after the highest that appears anywhere in the file** - in the pass
-log, or in any finding's `Raised:` line. Counting the entries in the log would be the obvious rule
-and it breaks on an interrupted review, which is required to leave its findings behind and write no
-pass entry: those findings already say `pass 3`, the log still ends at `Pass 2`, and the next
-reviewer would call itself `Pass 3` as well. Two different reviews would then share a number, and a
-finding would be attributed to a review it was never part of.
+**Fix your pass number before you write anything, from what the file held when you opened it** - one
+past the highest that appears in the pass log or in any finding's `Raised:` line - and stamp every
+finding you append with it. Deciding it at the end instead would count the findings you just
+appended and land you one too high every time. Reading the log alone would break the other way, on
+an interrupted review that is required to leave its findings and write no pass entry: those say
+`pass 3`, the log still ends at `Pass 2`, and the next reviewer would take `3` as well, so two
+reviews would share a number and a finding would be attributed to a review it was never part of.
 
 **Reopening.** A finding marked `FIXED` that you can still reproduce goes back to `Status: OPEN`,
 with a line appended under its `Decision` naming this pass and what you saw. `WONTFIX` and
@@ -165,29 +166,26 @@ disagree, and put the disagreement in your report instead.
 
 **A review can end the task, and is meant to.** Apply these before writing the pass entry:
 
-- A pass with nothing `Blocking` and at most two `Should fix` is the task's last pass. Write
-  `Termination: budget met`, and **recommend a ruling for every finding it leaves `OPEN`** - naming
-  the ids, and naming which ruling: `WONTFIX` for anything the level or `Out of scope` put outside
-  scope, matching what `decide` calls the expected outcome there, and `DEFERRED` for what is real
-  and worth doing but outside this budget. Cover the `Should fix` ones too, not only what sits below
-  them: a task cannot be both over and carrying open findings, and those are the ones a later reader
-  will assume somebody is still working on. Recommending is as far as this goes - setting a `Status`
-  is `decide`, and `decide` is the coordinator's. A reviewer who rules on its own findings has
-  closed its own review.
-- When the pass before this one raised at least one finding, and this pass raised as many or more,
-  write `Termination: DIMINISHING RETURNS` and say so on the report's second line, straight after
-  the verdict. It is a signal to the human - narrow the scope or accept the work as it stands - not
-  a verdict, and it does not turn `PASS` into `FAIL`. The floor matters: without it a clean pass
-  following a clean pass satisfies "as many or more" at zero and escalates a review that found
-  nothing. A first pass has nothing to compare against, so it never carries this either.
-- When the passes the `Rigor` level allows, or an explicit `Review budget`, are spent, no further
-  pass is written. A reviewer asked for one anyway records the refusal and the budget instead.
-- **A pass that returns `FAIL` does not spend the budget.** The budget limits how many times the
-  work is reviewed *afresh*, not how many times a named fix is confirmed - counting a `FAIL` would
-  make `low`, which allows one pass, unable to finish any task that fails once: the only pass it
-  permitted said `FAIL`, and a finished task needs a `PASS`. A pass that only re-checks what a
-  previous `FAIL` named writes `Termination: confirming <F-nnn>` and reviews nothing else. Three
-  consecutive `FAIL`s on one task is `DIMINISHING RETURNS` and goes back to the human.
+- **The review budget is what ends reviewing** - the passes the `Rigor` level allows, or an explicit
+  `Review budget`. Nothing is counted or compared to decide this: a rule that read the severities a
+  pass happened to raise would end a `high` task on its first pass as readily as a `low` one, and
+  would end a task on a `FAIL` whose requirement was never met. **A pass that returns `FAIL` does
+  not spend the budget** - the budget limits how many times the work is reviewed afresh, not how
+  many times a named fix is confirmed, and counting it would leave `low` unable to finish any task
+  that fails once. A reviewer asked for a pass past the budget says so in its report rather than
+  writing one.
+- **On the last pass the budget allows, recommend a ruling for every finding still `OPEN`** - naming
+  the ids and which ruling: `WONTFIX` for anything the level or `Out of scope` put outside scope,
+  matching what `decide` calls the expected outcome there, and `DEFERRED` for what is real and worth
+  doing but outside this budget. A task cannot be both over and carrying open findings. Recommending
+  is as far as this goes - setting a `Status` is `decide`, and `decide` is the coordinator's. A
+  reviewer who rules on its own findings has closed its own review.
+- **When the pass before this one raised at least one finding and this pass raised as many or more,
+  say `DIMINISHING RETURNS` on the report's second line**, straight after the verdict. It is a
+  signal to the human - narrow the scope or accept the work as it stands - not a verdict, and it
+  does not turn `PASS` into `FAIL`. The floor matters: without it a clean pass following a clean
+  pass satisfies "as many or more" at zero and escalates a review that found nothing. A first pass
+  has nothing to compare against, so it never carries this.
 - A finding against the test apparatus itself - a fixture, a mutant, a harness, a guard on another
   guard - takes **at most** the severity the `Rigor` table gives it, **unless you can name the
   user-visible failure it lets through**, in which case it takes the severity that failure deserves.
@@ -218,12 +216,15 @@ passed (`TASKS.md` deliberately carries no status field), and ids are allocated 
 present, so removing the highest ones hands the next entry an id that already means something else.
 Every one of those is a silent failure. Length is a readability problem; the entries are the record.
 
-- **Condense every entry**, whatever its `Status`. Keep the id, the `Status`, the defect or proposal
-  in one sentence, the `Raised:` line, and the ground the ruling stood on. Process narration, quoted
-  output and superseded discussion go; a `Decision` ruled on more than once collapses to the ruling
-  that stands, dated.
-- **Condense pass entries the same way** - keep every one, cut each to its verdict, task, target,
-  `Raised`, and `Termination`. The per-pass narrative under it is what grows without bound.
+- **Keep every field an entry already has; shorten only its prose.** A list of fields worth keeping
+  would be wrong the moment any entry gained one, and the two ledgers do not carry the same fields
+  anyway - a finding has `Severity:` and `Where:`, a proposal has `Source:` and `Created:`. What
+  shrinks is the free text: the defect or the reason collapses to a sentence, process narration,
+  quoted output and superseded discussion go, and a `Decision` ruled on more than once collapses to
+  the ruling that stands, dated. A `Proposed change` block is wording somebody will paste into
+  `TASKS.md`, so it is not prose and does not shrink.
+- **Condense pass entries the same way** - keep every one, and every field in its header. The
+  per-pass narrative underneath is what grows without bound.
 - **Never renumber, never delete, never merge two entries into one.** A `DEFERRED` finding that
   comes back has to come back as itself.
 
@@ -369,8 +370,9 @@ closed and later reopened still carries the reasoning that closed it.>
 ## Findings - implementer
 
 ### F-004
-<Same fields. A code defect the implementer hit that is not a gap in the spec - a spec gap is a
-TCR, not a finding.>
+<The same fields except `Raised:`, which becomes `Found: 2026-08-25` - the implementer has no pass
+number and normally runs before any pass exists. A code defect it hit that is not a gap in the
+spec - a spec gap is a TCR, not a finding.>
 
 ## Passes
 
@@ -382,7 +384,6 @@ code-review: <the level it ran at and what it actually covered> | not run - <why
 Raised: F-001, F-002, F-003 | none
 Required fixes: <the F-nnn that must be addressed before this can pass> | none
 TASKS.md update needed: yes - <TCR ids> | no
-Termination: budget met | DIMINISHING RETURNS | confirming <F-nnn> | continue - <what the next pass must look at>
 
 #### TASKS.md compliance
 One line per acceptance criterion - met, not met, or cannot judge.

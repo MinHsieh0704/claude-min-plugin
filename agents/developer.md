@@ -96,9 +96,13 @@ you started, and anything committed since then is invisible to you - so a claim 
 still contains an old rule is a claim about your snapshot, not about the tree. This applies to the
 files you did not touch, which is exactly where it is easiest to miss.
 
-**A code defect that is not a gap in the spec goes in the ledger, not only in this report.** Append
-it to `## Findings - implementer` in `.workflow/REVIEW.md` as the `workflow` skill lays that section
-out, then name it here. A spec gap is still a TCR. The distinction is what the fix would touch:
+**A code defect that is not a gap in the spec, and that you are leaving unfixed, goes in the ledger -
+not only in this report.** Append it to `## Findings - implementer` in `.workflow/REVIEW.md` as the
+`workflow` skill lays that section out, then name it here. **One you fixed as part of your own
+change is not a finding** - it is in the diff, so it belongs in the changed-files list above and
+nowhere else; filing it would leave an `OPEN` entry for work already done, which the next
+implementer would pick up and redo. A spec gap is still a TCR. The distinction is what the fix would
+touch:
 code, or the requirement. A defect that lives only in a report is read once and then gone.
 
 ## Boundaries
