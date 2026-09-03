@@ -25,7 +25,8 @@ prefix. All three belong in version control.
 
 **The two ledgers are appended to, never overwritten.** `TASK-CHANGES.md` and `REVIEW.md` only ever
 grow - a later pass adds to what is already there, the only in-place edit is recording a ruling on
-an entry that already exists, and no entry is deleted except by `trim`. **`TASKS.md` is the
+an entry that already exists, and **no entry is ever deleted** - `trim` shortens entries and removes
+none. **`TASKS.md` is the
 exception and is meant to be**: it is the spec rather than a ledger, the coordinator owns it, and
 `decide` folds accepted wording straight into it instead of appending a correction after the thing
 it corrects.
@@ -33,7 +34,8 @@ it corrects.
 Overwriting a ledger would make every ruling in it depend on somebody having committed the file
 between passes. The coordinator can commit; neither agent can, and nothing in this workflow tells
 anyone to - so a ledger that survives only when it happened to be committed does not survive.
-`trim` is the one deliberate exception, and it is the coordinator's to run.
+`trim` does not weaken this - it makes entries shorter, never fewer, and it is the coordinator's to
+run.
 
 **Language follows whichever of the three already exists.** Read the ones that are present and write
 in the language they use; a task whose spec is in one language and whose review is in another is
@@ -68,16 +70,14 @@ used them without invoking anything. **A ledger written to spec by a role that n
 overwritten instead of appended to, or a ruling made by someone other than the coordinator.
 
 **Every entry in `TASK-CHANGES.md` and `REVIEW.md` carries an id** - `TCR-nnn` for a change
-proposal, `F-nnn` for a finding. Ids are **never reused and never renumbered**, so one id names one
-thing for the life of the task and a person can rule on it by saying its number and nothing else.
+proposal, `F-nnn` for a finding. Ids are allocated from the highest already present in that file,
+and are **never reused and never renumbered**, so one id names one thing for the life of the task
+and a person can rule on it by saying its number and nothing else.
 
-**Allocate from the file's `Ids issued through` line, not from the entries you can see.** Each
-ledger carries that line under its top heading - `Ids issued through: F-000` in a new file - and the
-next id is one past it; writing an entry advances it. Counting the entries present would be the
-obvious rule and it is wrong, because `trim` removes entries: after the ruled-on `F-002` and `F-003`
-are gone, the highest one visible is `F-001` and the next finding would silently become a second
-`F-002`. A ruling recorded against `F-002` would then name two unrelated defects, which is exactly
-what "never reused" exists to prevent.
+Allocating from what is present is only safe because **no subcommand ever removes an entry** - not
+even `trim`, which rewrites entries shorter and leaves every id where it is. Anything that deleted
+the highest-numbered entries would hand the next one an id that already means something else, and
+the ruling recorded against it would name two unrelated things.
 
 ### `init`
 
@@ -136,7 +136,7 @@ an assertion, and the next pass has nothing to argue with except the finding its
 replace what is already there. `Decision` is a running log, so an entry ruled on more than once
 shows every ruling and the order they came in, and a finding that is reopened later still carries
 the reasoning that closed it. Nothing else in the entry is rewritten, and no entry is deleted by
-this or any other subcommand except `trim`.
+this or any other subcommand, `trim` included.
 A `REJECTED` proposal and a `WONTFIX` finding are both decisions worth being able to find later,
 not mistakes to erase - and until one is written down, the next pass raises the same thing again
 with no way to tell that it was already answered.
@@ -174,11 +174,12 @@ disagree, and put the disagreement in your report instead.
   will assume somebody is still working on. Recommending is as far as this goes - setting a `Status`
   is `decide`, and `decide` is the coordinator's. A reviewer who rules on its own findings has
   closed its own review.
-- When this pass raised as many findings as the one before it or more, write
-  `Termination: DIMINISHING RETURNS` and say so on the report's second line, straight after the
-  verdict. It is a signal to the human - narrow the scope or accept the work as it stands - not a
-  verdict, and it does not turn `PASS` into `FAIL`. A first pass has nothing to compare against, so
-  it never carries this.
+- When the pass before this one raised at least one finding, and this pass raised as many or more,
+  write `Termination: DIMINISHING RETURNS` and say so on the report's second line, straight after
+  the verdict. It is a signal to the human - narrow the scope or accept the work as it stands - not
+  a verdict, and it does not turn `PASS` into `FAIL`. The floor matters: without it a clean pass
+  following a clean pass satisfies "as many or more" at zero and escalates a review that found
+  nothing. A first pass has nothing to compare against, so it never carries this either.
 - When the passes the `Rigor` level allows, or an explicit `Review budget`, are spent, no further
   pass is written. A reviewer asked for one anyway records the refusal and the budget instead.
 - **A pass that returns `FAIL` does not spend the budget.** The budget limits how many times the
@@ -205,30 +206,29 @@ re-verified spends that promise on something you never saw.
 
 ### `trim`
 
-Coordinator only. Cut `TASK-CHANGES.md` and `REVIEW.md` back to what is still live. Runnable at any
-point, not only at the end - a ledger several times the size of the work it reviewed is unreadable
-long before the task finishes, and where the repository root is a plugin it ships to every
-installer's cache.
+Coordinator only. Shorten `TASK-CHANGES.md` and `REVIEW.md` without losing anything they record.
+Runnable at any point - a ledger several times the size of the work it reviewed is unreadable long
+before the task finishes, and where the repository root is a plugin it ships to every installer's
+cache.
 
-**Commit the ledgers before trimming, and say so when you cannot.** This is the one operation that
-destroys what is written, and the only recovery is history - so the history has to exist first. The
-paragraph above rules out relying on a file that was committed only by luck; here the coordinator is
-both the one role that may run this and the one role that can commit, so the precondition is theirs
-to meet rather than a hope. On a repository where committing is not possible, do not trim.
+**`trim` never deletes an entry.** It rewrites each one shorter and that is all. Deleting was the
+obvious design and it is wrong three ways at once: `review` has to be able to reopen a `FIXED`
+finding under the id it already had, the pass log is the only record that an earlier task ever
+passed (`TASKS.md` deliberately carries no status field), and ids are allocated from the highest
+present, so removing the highest ones hands the next entry an id that already means something else.
+Every one of those is a silent failure. Length is a readability problem; the entries are the record.
 
-- **Delete** entries ruled `FIXED` or `ACCEPTED`. They record work that is now in the tree, and the
-  commit made just above still holds them.
-- **Keep** `OPEN`, `PENDING` and `DEFERRED`, and keep **`WONTFIX` and `REJECTED`** - the decisions
-  *not* to act. Deleting those is how the next pass raises the same thing again with no way to tell
-  it was already answered, which is the reason this file gives for writing them down at all.
-- **Condense every entry that stays** to the id, `Status`, the defect or proposal in a sentence, and
-  the ground the ruling stood on. Process narration, quoted output and superseded discussion go; a
-  `Decision` ruled on more than once collapses to the ruling that stands, dated.
-- **Cut the pass log to its last entry.** What is true now is the ledger, not the passes.
-- **Leave `Ids issued through` exactly as it is.** It is the only record that the deleted ids were
-  ever spent, so trimming it is how the next entry gets an id that already means something else.
+- **Condense every entry**, whatever its `Status`. Keep the id, the `Status`, the defect or proposal
+  in one sentence, the `Raised:` line, and the ground the ruling stood on. Process narration, quoted
+  output and superseded discussion go; a `Decision` ruled on more than once collapses to the ruling
+  that stands, dated.
+- **Condense pass entries the same way** - keep every one, cut each to its verdict, task, target,
+  `Raised`, and `Termination`. The per-pass narrative under it is what grows without bound.
+- **Never renumber, never delete, never merge two entries into one.** A `DEFERRED` finding that
+  comes back has to come back as itself.
 
-Never renumber - a `DEFERRED` finding that comes back has to come back as itself.
+A ledger that is still too long after this is telling you the task was too big, not that `trim`
+should delete more.
 
 ## `.workflow/TASKS.md`
 
@@ -307,7 +307,6 @@ is worse than no field at all.
 
 ```md
 # Task changes
-Ids issued through: TCR-000
 
 ## TCR-001
 Status: PENDING | ACCEPTED | REJECTED
@@ -338,11 +337,11 @@ to stop. Do whatever does not depend on the answer, and say in your report that 
 
 Two halves. The **findings ledger** is the living register - findings accumulate there, and their
 `Status` and `Decision` are the only things `decide` ever touches. The **pass log** under it records
-what each review actually did; an entry is never edited once written, and only `trim` removes one.
+what each review actually did; its verdict never changes, and no entry is ever removed - `trim` only
+shortens the narrative under one.
 
 ```md
 # Review
-Ids issued through: F-000
 
 ## Findings - manual review
 
@@ -383,7 +382,7 @@ code-review: <the level it ran at and what it actually covered> | not run - <why
 Raised: F-001, F-002, F-003 | none
 Required fixes: <the F-nnn that must be addressed before this can pass> | none
 TASKS.md update needed: yes - <TCR ids> | no
-Termination: budget met | DIMINISHING RETURNS | continue - <what the next pass must look at>
+Termination: budget met | DIMINISHING RETURNS | confirming <F-nnn> | continue - <what the next pass must look at>
 
 #### TASKS.md compliance
 One line per acceptance criterion - met, not met, or cannot judge.

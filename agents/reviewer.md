@@ -103,9 +103,11 @@ report and do not argue the scope inside a finding.** Three things land here rat
 - A finding the level or `Out of scope` puts outside scope says which of the two put it there.
 - `DIMINISHING RETURNS`, when the rules produce it, goes on the report's second line, directly
   after the verdict, and in the pass entry's `Termination` field.
-- When a pass is the task's last one, say so, and name the ids you recommend be ruled `DEFERRED`
-  instead of listing what a next pass could look at. Recommending is as far as it goes - setting a
-  `Status` is the coordinator's.
+- When a pass is the task's last one, say so, and name a recommended ruling for **every** finding it
+  leaves `OPEN` - both rulings the skill names, not just one: `WONTFIX` for what the level or
+  `Out of scope` put outside scope, `DEFERRED` for what is real and worth doing but outside this
+  budget. Recommending every id beats listing what a next pass could look at, and recommending is as
+  far as it goes - setting a `Status` is the coordinator's.
 
 ## Report
 
