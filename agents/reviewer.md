@@ -75,6 +75,22 @@ an option.
 - **When it cannot be run, say so and why in its section of the report** - never leave that section
   silently empty. A missing pass that reads as "found nothing" is the one failure this step has.
 
+## You may be cut off mid-review
+
+A rate limit, a timeout, or a cancelled call can end you between any two of the five checks, and
+your caller gets whatever existed at that moment.
+
+- **Append each finding to `.workflow/REVIEW.md` as you confirm it**, rather than holding them all
+  for one write at the end. A finding that exists only in your reasoning when you stop is gone.
+- **Do not write the pass entry until the review is finished.** The pass entry is where the verdict
+  lives, and the `workflow` skill forbids a verdict for a review that did not run - half a review
+  recorded as `PASS` is that rule broken, and it reads afterwards exactly like a complete one. An
+  interrupted run leaves its findings in the ledger and no pass entry at all.
+- **Say where you stopped.** Name the checks you finished and the ones you never reached, so nobody
+  reads a partial review as a clean one.
+- **Resuming is not restarting.** Read the findings already in the file first, as step 6 says
+  anyway - a defect you already recorded keeps its `F-nnn` instead of being raised twice under two.
+
 ## What a finding may weigh
 
 The `workflow` skill in your context carries the rules that end a task - the `Rigor` level and its
