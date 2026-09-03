@@ -140,11 +140,12 @@ branch range），所以它必須在那一段寫明實際涵蓋了什麼、兩�
 | **Reply in Traditional Chinese**（以繁體中文回覆） | 開啟 | Claude 以 zh-Hant 回覆。程式碼、指令、識別字與檔案路徑維持原本語言。此選項只管「回覆」— 它不決定檔案內容要用哪種語言撰寫。 |
 
 coding-guidelines 摘要是無條件注入的，沒有對應選項 — 不想要就停用整個外掛。
-它每個 session 大約花費 400 個 token；完整全文只有在呼叫該 skill 時才會載入。
+它每個 session 花掉幾百個 token；完整全文只有在呼叫該 skill 時才會載入。
 
 ## Commit 慣例
 
-`/claude-min-plugin:commit` 最多會寫入四個 trailer：
+`/claude-min-plugin:commit` 只會寫入 `Co-Authored-By:`、`AI-Contribution:`、`Fixes:`、
+`Fixes-Candidates:`、`Refs:` 這幾種 trailer，不會有別的：
 
 ```
 fix: correct server version comparison

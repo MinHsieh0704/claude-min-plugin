@@ -413,9 +413,9 @@ case, since implementation usually runs before any review. Without it, a code de
 building has nowhere to go but a free-form report, and a report is read once and then gone.
 
 The finding it appends carries `Status: OPEN` like any other. **`OPEN` is the absence of a ruling,
-not a ruling** - writing it is how the entry becomes visible to `decide`, to `trim`, which sorts by
-`Status`, and to the next implementer, which works only what is `OPEN`. A finding with no `Status`
-at all is skipped by all three, which is the one outcome this section exists to prevent. Every other
+not a ruling** - writing it is how the entry becomes visible to `decide`, which rules on what is
+`OPEN`, and to the next implementer, which works only what is `OPEN`. A finding with no `Status` at
+all is skipped by both, which is the one outcome this section exists to prevent. Every other
 value is a ruling and belongs to the coordinator, and so does every `Decision` line.
 
 A pass's `Verdict` describes that pass and stays as written. **What is true now is the ledger** -
