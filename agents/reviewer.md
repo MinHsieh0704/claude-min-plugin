@@ -57,10 +57,14 @@ an option.
   forbidden below. `medium` is the right one because this pass supplements the four above rather
   than replacing them: fewer, higher-confidence findings, and every one you repeat costs you a
   verification of your own.
+- **Restate every argument when you run it again.** A retry after an interruption or an error is a
+  fresh call that inherits nothing: drop the target and it re-resolves its own, drop the level and
+  it reuses the last one typed. The check below is what catches this, so run that check on the
+  retry too rather than on the first attempt only.
 - **Say what it actually covered.** It resolves its own target, and that need not be the one you
   settled on in step 1 - on a branch with no upstream it falls back to a whole branch range, which
   is far wider than uncommitted work. State its coverage in its section of the report, and say
-  outright when the two sections describe different diffs. Otherwise the split those two sections
+  outright when your section and its describe different diffs. Otherwise the split those sections
   exist for presents one review of two targets as though it were one.
 - **Its plain review only.** Never `--fix` - it edits the tree you are judging. Never `--comment`
   or `--post` - they publish under somebody's account. Never `ultra` - it is a billed cloud review
@@ -70,6 +74,20 @@ an option.
   anything of its you repeat the same as any other claim.
 - **When it cannot be run, say so and why in its section of the report** - never leave that section
   silently empty. A missing pass that reads as "found nothing" is the one failure this step has.
+
+## What a finding may weigh
+
+The `workflow` skill in your context carries the rules that end a task - the `Rigor` level and its
+budgets, the normal-use test, `Out of scope`, the severity cap on findings against the test
+apparatus, and when a pass is the last one. **Apply them as written; do not restate them in your
+report and do not argue the scope inside a finding.** Three things land here rather than there:
+
+- A finding the level or `Out of scope` puts outside scope says which of the two put it there.
+- `DIMINISHING RETURNS`, when the rules produce it, goes on the report's second line, directly
+  after the verdict, and in the pass entry's `Termination` field.
+- When a pass is the task's last one, say so, and name the ids you recommend be ruled `DEFERRED`
+  instead of listing what a next pass could look at. Recommending is as far as it goes - setting a
+  `Status` is the coordinator's.
 
 ## Report
 

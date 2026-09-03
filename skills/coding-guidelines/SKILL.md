@@ -31,6 +31,7 @@ Before implementing:
 - No abstractions for single-use code.
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
+- **When this collides with guideline 9** — a loud failure for a case that cannot reasonably occur — **this one wins**: one comment line saying the case is not handled, not a branch that handles it.
 - If you write 200 lines and it could be 50, rewrite it.
 
 Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
@@ -57,7 +58,7 @@ Test: Every changed line should trace directly to the user's request.
 
 ## 4. Goal-Driven Execution
 
-**Define success criteria. Loop until verified.**
+**Define success criteria. Loop until verified — within the budget the task set.**
 
 Transform tasks into verifiable goals:
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
@@ -72,6 +73,8 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria allow independent iteration. Weak criteria ("make it work") require constant clarification.
+
+**The loop has an end.** When the task carries a size or review budget, spending it ends the loop: report what is still unverified and by how much the budget was missed, and do not open another round. A criterion that can always be made stricter is not a criterion, it is a direction.
 
 ---
 
@@ -134,6 +137,8 @@ Inline note format:
 // Using Map instead of plain object: preserves insertion order,
 // needed for deterministic output in tests.
 ```
+
+**One sentence per decision.** A measurement, or an argument longer than that, goes into a references file the note points at; the note itself carries the conclusion and the number. A file where a quarter of the lines explain the other three quarters has moved the complexity, not removed it.
 
 ---
 

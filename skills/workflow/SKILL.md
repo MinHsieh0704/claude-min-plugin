@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (a ledger of numbered review findings and the passes that raised them). Four subcommands - init, change, decide, review. Every entry carries a stable id, the files are appended to rather than overwritten, and a coordinator rules on one entry by naming its number. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, or when ruling on a numbered proposal or finding.
+description: Create and maintain the three files that carry a task from specification to accepted implementation - TASKS.md (the only formal spec), TASK-CHANGES.md (change proposals awaiting a decision), and REVIEW.md (a ledger of numbered review findings and the passes that raised them). Five subcommands - init, change, decide, review, trim. Every entry carries a stable id, the files are appended to rather than overwritten, and a coordinator rules on one entry by naming its number. A one-word Rigor level in the spec sets the budgets that let a task end. Use when turning an approved plan into a spec, when a role finds the spec incomplete or contradictory, when recording a review, when ruling on a numbered proposal or finding, or when a ledger has grown past what is still live.
 ---
 
 # Workflow documents
@@ -25,13 +25,15 @@ prefix. All three belong in version control.
 
 **The two ledgers are appended to, never overwritten.** `TASK-CHANGES.md` and `REVIEW.md` only ever
 grow - a later pass adds to what is already there, the only in-place edit is recording a ruling on
-an entry that already exists, and no entry is ever deleted. **`TASKS.md` is the exception and is
-meant to be**: it is the spec rather than a ledger, the coordinator owns it, and `decide` folds
-accepted wording straight into it instead of appending a correction after the thing it corrects.
+an entry that already exists, and no entry is deleted except by `trim`. **`TASKS.md` is the
+exception and is meant to be**: it is the spec rather than a ledger, the coordinator owns it, and
+`decide` folds accepted wording straight into it instead of appending a correction after the thing
+it corrects.
 
 Overwriting a ledger would make every ruling in it depend on somebody having committed the file
 between passes. The coordinator can commit; neither agent can, and nothing in this workflow tells
 anyone to - so a ledger that survives only when it happened to be committed does not survive.
+`trim` is the one deliberate exception, and it is the coordinator's to run.
 
 **Language follows whichever of the three already exists.** Read the ones that are present and write
 in the language they use; a task whose spec is in one language and whose review is in another is
@@ -47,7 +49,7 @@ exists as a separate file instead of as edits to `TASKS.md`.
 
 ## Subcommands
 
-Invoked as `/claude-min-plugin:workflow <subcommand>`. **With no subcommand, list these four and
+Invoked as `/claude-min-plugin:workflow <subcommand>`. **With no subcommand, list these five and
 stop** - never guess which one was meant.
 
 | Subcommand | What it does | Who runs it |
@@ -56,6 +58,14 @@ stop** - never guess which one was meant.
 | `change` | Append the next `TCR-nnn` as `PENDING` | Any role |
 | `decide` | Rule on a pending `TCR-nnn`, or on an open `F-nnn` | The coordinator only |
 | `review` | Append a pass to `.workflow/REVIEW.md` from a review that was performed | Whoever reviewed |
+| `trim` | Cut the ledgers back to what is still live | The coordinator only |
+
+**Two of these are tools, three are formats.** `init` and `trim` do work nobody can do by reading -
+call them. `change`, `decide` and `review` describe a shape to write in, and this file is already
+in both agents' context through their `skills:` frontmatter, so a role that follows the shape has
+used them without invoking anything. **A ledger written to spec by a role that never called
+`change` is this working, not failing.** A failure looks different: an entry with no id, a `Status`
+overwritten instead of appended to, or a ruling made by someone other than the coordinator.
 
 **Every entry in `TASK-CHANGES.md` and `REVIEW.md` carries an id** - `TCR-nnn` for a change
 proposal, `F-nnn` for a finding. Ids are allocated from the highest already present in that file,
@@ -66,6 +76,13 @@ and a person can rule on it by saying its number and nothing else.
 
 Write `.workflow/TASKS.md` from the plan approved in this session - the usual route is plan mode,
 approved, then this. When a plan file path is given as a further argument, read that instead.
+
+**Ask for the `Rigor` level once, as a single question, and never block on it.** Three options with
+`low` selected. When there is no way to ask - a headless run, or a subagent with nobody to answer -
+write `low` and say so. `low` is the tightest budget, so an unattended run cannot quietly grant
+itself a large one; a task that turns out to need more gets its `Rigor` line raised by the
+coordinator, which is an edit anyone can see. This is the only budgeting question this workflow
+ever puts to a human - every number follows from the answer.
 
 **Never create the file from a conversation nobody approved.** One `T<n>` section per separately
 implementable piece. When `.workflow/TASKS.md` already exists, say so and stop rather than
@@ -97,8 +114,16 @@ Coordinator only. Rules on one entry, named by its id. Two id namespaces, one ve
 **An `F-nnn` in `REVIEW.md`**:
 
 - `FIXED` - it was addressed. Name the commit where there is one.
-- `WONTFIX` - a deliberate decision not to act on it.
-- `DEFERRED` - real, but not now.
+- `WONTFIX` - a deliberate decision not to act on it. **This is a normal outcome, not a way of
+  hiding work.** It is the expected ruling when the finding falls outside what the spec's `Rigor`
+  level or its `Out of scope` list puts in scope, when the triggering situation is rare and costs
+  no data, or when the fix would be larger than the harm. A ledger carrying many findings and no
+  `WONTFIX` is one where nobody weighed anything.
+- `DEFERRED` - real and worth doing, but outside this task's budget.
+
+**Every ruling on an `F-nnn` names its ground in the `Decision` line** - the probability of the
+triggering situation, its impact, or the cost of the fix. A ruling that names none of the three is
+an assertion, and the next pass has nothing to argue with except the finding itself.
 
 **Set `Status` in place, and append one dated line under `Decision` giving the reason** - never
 replace what is already there. `Decision` is a running log, so an entry ruled on more than once
@@ -123,11 +148,51 @@ with a line appended under its `Decision` naming this pass and what you saw. `WO
 `DEFERRED` are the coordinator's calls - leave them exactly where they are however much you
 disagree, and put the disagreement in your report instead.
 
+**A review can end the task, and is meant to.** Apply these before writing the pass entry:
+
+- A pass with nothing `Blocking` and at most two `Should fix` is the task's last pass. Write
+  `Termination: budget met`, and **recommend** in the report that everything it raised below
+  `Should fix` be ruled `DEFERRED` - naming the ids. Recommending is as far as this goes: setting
+  that `Status` is `decide`, and `decide` is the coordinator's. A reviewer who rules on its own
+  findings has closed its own review.
+- When this pass raised as many findings as the one before it or more, write
+  `Termination: DIMINISHING RETURNS` and say so on the report's second line, straight after the
+  verdict. It is a signal to the human - narrow the scope or accept the work as it stands - not a
+  verdict, and it does not turn `PASS` into `FAIL`. A first pass has nothing to compare against, so
+  it never carries this.
+- When the passes the `Rigor` level allows, or an explicit `Review budget`, are spent, no further
+  pass is written. A reviewer asked for one anyway records the refusal and the budget instead.
+- A finding against the test apparatus itself - a fixture, a mutant, a harness, a guard on another
+  guard - takes the severity the `Rigor` table gives it. *Could this test pass while the code is
+  broken?* has a yes answer for every finite suite, so it cannot be the thing that decides whether
+  reviewing ends; the severity cap is.
+- A finding whose triggering situation is outside the level's scope, or is named under
+  `Out of scope`, is `Consider`, and says which of the two put it there.
+
 **When `REVIEW.md` is already there in a shape this skill does not describe** - written before these
 conventions, or by hand - do not rewrite it and do not give its findings ids. Append the new ledger
 below it, with one line saying where the old content ends and why what is above carries no ids. An
 id is a promise that somebody verified the thing it names; putting one on a finding you have not
 re-verified spends that promise on something you never saw.
+
+### `trim`
+
+Coordinator only. Cut `TASK-CHANGES.md` and `REVIEW.md` back to what is still live. Runnable at any
+point, not only at the end - a ledger several times the size of the work it reviewed is unreadable
+long before the task finishes, and where the repository root is a plugin it ships to every
+installer's cache.
+
+- **Delete** entries ruled `FIXED` or `ACCEPTED`. They record work now in the tree, and `git log -p`
+  on the file still finds any of them by id.
+- **Keep** `OPEN`, `PENDING` and `DEFERRED`, and keep **`WONTFIX` and `REJECTED`** - the decisions
+  *not* to act. Deleting those is how the next pass raises the same thing again with no way to tell
+  it was already answered, which is the reason this file gives for writing them down at all.
+- **Condense every entry that stays** to the id, `Status`, the defect or proposal in a sentence, and
+  the ground the ruling stood on. Process narration, quoted output and superseded discussion go; a
+  `Decision` ruled on more than once collapses to the ruling that stands, dated.
+- **Cut the pass log to its last entry.** What is true now is the ledger, not the passes.
+
+Never renumber - a `DEFERRED` finding that comes back has to come back as itself.
 
 ## `.workflow/TASKS.md`
 
@@ -139,6 +204,10 @@ One paragraph - what this work is for, in terms of the outcome rather than the i
 
 ## Constraints
 What must stay true. Compatibility, performance budgets, things that must not change.
+Rigor: low | medium | high   <- one word; absent means low. It sets the budgets below.
+Size budget: <optional override - lines across every file this task creates or grows, tests included>
+Review budget: <optional override - review passes before the task is done>
+Out of scope: <optional additions - situations this task deliberately does not handle, one per line>
 
 ## Technical requirements
 Language, framework, existing modules to reuse, interface contracts to honour.
@@ -169,6 +238,28 @@ every reference that already exists.
 **Acceptance criteria carry the weight.** A requirement nobody can check is a requirement two
 people will read differently. When a criterion cannot be made checkable, write that down under it -
 an acknowledged gap is workable, a vague criterion is not.
+
+**`Rigor` is what lets a task end, and it is one word.** Acceptance criteria say when the work is
+*correct*; nothing else says when it is *finished*, and a task carrying only correctness criteria
+can always be made more correct. Nobody can state a size cap, a pass count and a list of unhandled
+situations before the work exists, so the spec asks for none of them - it asks for one level:
+
+| | `low` (default) | `medium` | `high` |
+|---|---|---|---|
+| Size budget | 2x the lines the task replaces; 300 for new work | 3x; 500 | none - reported, not capped |
+| Review budget | 1 pass | 2 | 3 |
+| In scope | situations met in normal use, plus any silent loss | also rare situations that fail loudly | every reachable situation |
+| Findings against the tests themselves | `Consider` | `Consider` | `Should fix` when the test guards a past defect |
+| Proof required of a test | it was run and passed | it was seen to fail before it passed | the same |
+
+"Normal use" has a test that needs nobody to answer it: **would a maintainer of this repository hit
+the situation within a year of ordinary work?** If not, it is rare. Rare *and silent* - a file
+skipped with no trace, a count that reads as clean - is in scope at every level, because silence is
+the one failure nothing later catches. Rare *and loud* - the run stops and says why - is out of
+scope at `low`. Cosmetic is out of scope everywhere. An explicit `Size budget`, `Review budget` or
+`Out of scope` line always beats the level.
+
+A budget the work then exceeds is reported as a number, never silently absorbed.
 
 **A task carries no status field, deliberately.** Whether `T1` is finished is already recorded in
 `REVIEW.md` - a pass that returned `PASS` for it with no `OPEN` finding left against it - and a
@@ -238,6 +329,12 @@ closed and later reopened still carries the reasoning that closed it.>
 ### F-003
 <Same fields.>
 
+## Findings - implementer
+
+### F-004
+<Same fields. A code defect the implementer hit that is not a gap in the spec - a spec gap is a
+TCR, not a finding.>
+
 ## Passes
 
 ### Pass 1 - 2026-08-25
@@ -248,6 +345,7 @@ code-review: <the level it ran at and what it actually covered> | not run - <why
 Raised: F-001, F-002, F-003 | none
 Required fixes: <the F-nnn that must be addressed before this can pass> | none
 TASKS.md update needed: yes - <TCR ids> | no
+Termination: budget met | DIMINISHING RETURNS | continue - <what the next pass must look at>
 
 #### TASKS.md compliance
 One line per acceptance criterion - met, not met, or cannot judge.
@@ -262,14 +360,19 @@ What was actually run and what it printed. Say plainly what could not be run.
 **Findings sit in id order, oldest first** - append-only and severity-ordered cannot both hold once
 a second pass adds a `Blocking` finding below existing `Consider` ones, and of the two, append-only
 is the one the rulings depend on. `Severity:` is the field a reader sorts or greps by. Every finding
-is anchored to `file:line` with the concrete case that triggers it, and ids are unique across both
-sections, so `F-003` names one finding no matter which section it sits in.
+is anchored to `file:line` with the concrete case that triggers it, and ids are unique across all
+three sections, so `F-003` names one finding no matter which section it sits in.
 
-Keeping the two finding sections apart is what makes the review auditable - `/code-review` is one
-input to the pass, not the pass itself, and a reader has to be able to tell which findings a human
-process produced. **When `/code-review` could not be run, that belongs in the pass entry's
-`code-review` line, not in this section** - it is a fact about one pass, and a missing pass that
-reads as "found nothing" is this step's one failure.
+Keeping the three finding sections apart is what makes the review auditable - `/code-review` is one
+input to a pass rather than the pass itself, and the implementer's section holds defects found by
+someone who was building rather than reviewing. A reader has to be able to tell which process
+produced which finding. **When `/code-review` could not be run, that belongs in the pass entry's
+`code-review` line, not in its findings section** - it is a fact about one pass, and a missing pass
+that reads as "found nothing" is this step's one failure.
+
+**The implementer's section is the only one the implementer may write to**, and only by appending a
+finding - never a `Status`, never a `Decision`. Without it, a code defect found while building has
+nowhere to go but a free-form report, and a report is read once and then gone.
 
 A pass's `Verdict` describes that pass and stays as written. **What is true now is the ledger** -
 an open `Blocking` finding is open whatever the last pass concluded.
