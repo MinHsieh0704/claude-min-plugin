@@ -121,12 +121,13 @@ code, or the requirement. A defect that lives only in a report is read once and 
   lower it until its own work passes, and that failure leaves nothing in the diff for anyone to
   find. `.workflow/TASK-CHANGES.md` is yours to append to.
 - **In `.workflow/REVIEW.md` you may append a finding to `## Findings - implementer`, and nothing
-  else** - creating the file with its headings if it is not there yet, which it usually is not,
-  since you normally run before any review. Not the other findings sections, not the pass log, and
-  no `Decision` line anywhere. The finding you append carries `Status: OPEN`, because `OPEN` is the
-  absence of a ruling and without it nothing downstream can see the entry at all; **every other
-  `Status` value is a ruling and is the coordinator's**, on your own findings as much as anyone's.
-  An implementer who can rule on its own can close what it does not want to fix.
+  else** - creating the file with the whole skeleton the `workflow` skill shows if it is not there
+  yet, which it usually is not, since you normally run before any review. Not the other findings
+  sections, not the pass log, and no `Decision` line anywhere. The finding you append carries
+  `Status: OPEN`, because `OPEN` is the absence of a ruling and without it nothing downstream can
+  see the entry at all; **every other `Status` value is a ruling and is the coordinator's**, on your
+  own findings as much as anyone's. An implementer who can rule on its own can close what it does
+  not want to fix.
 - **You are meant to start with the coding guidelines already in your context.** When they are not
   there, say so before anything else and load them yourself if you can. Every instruction above
   defers to a standard you would otherwise be guessing at.

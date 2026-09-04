@@ -396,11 +396,13 @@ What was actually run and what it printed. Say plainly what could not be run.
 ...
 ```
 
-**Findings sit in id order, oldest first** - append-only and severity-ordered cannot both hold once
-a second pass adds a `Blocking` finding below existing `Consider` ones, and of the two, append-only
-is the one the rulings depend on. `Severity:` is the field a reader sorts or greps by. Every finding
-is anchored to `file:line` with the concrete case that triggers it, and ids are unique across all
-three sections, so `F-003` names one finding no matter which section it sits in.
+**Within a section, findings sit in id order, oldest first** - append-only and severity-ordered
+cannot both hold once a second pass adds a `Blocking` finding below existing `Consider` ones, and of
+the two, append-only is the one the rulings depend on. **The sections themselves are not in id order
+and cannot be**: the implementer normally files before any pass exists, so its lower ids sit in the
+last section - do not reorder them to fix that. `Severity:` is the field a reader sorts or greps by.
+Every finding is anchored to `file:line` with the concrete case that triggers it, and ids are unique
+across all three sections, so `F-003` names one finding no matter which section it sits in.
 
 Keeping the three finding sections apart is what makes the review auditable - `/code-review` is one
 input to a pass rather than the pass itself, and the implementer's section holds defects found by
@@ -410,9 +412,12 @@ produced which finding. **When `/code-review` could not be run, that belongs in 
 that reads as "found nothing" is this step's one failure.
 
 **The implementer's section is the only one the implementer may write to**, and only by appending a
-finding, **creating the file with its headings when it does not exist yet** - which is the normal
-case, since implementation usually runs before any review. Without it, a code defect found while
-building has nowhere to go but a free-form report, and a report is read once and then gone.
+finding, **creating the file when it does not exist yet - with every heading the block above shows,
+its own included and the others empty** - which is the normal case, since implementation usually
+runs before any review. Writing only its own would leave the next reviewer inserting a heading above
+existing content, which is the rewriting its boundaries forbid. Without the section, a code defect
+found while building has nowhere to go but a free-form report, and a report is read once and then
+gone.
 
 The finding it appends carries `Status: OPEN` like any other. **`OPEN` is the absence of a ruling,
 not a ruling** - writing it is how the entry becomes visible to `decide`, which rules on what is
