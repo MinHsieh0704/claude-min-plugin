@@ -19,6 +19,7 @@ Before implementing:
 - State assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
+- **Any set of options you offer must include one that does less** — remove something, simplify, or don't do it at all. A menu where every option adds has already answered the question, and it answers it before anyone has gone looking for the simpler approach the bullet above asks for.
 - If something is unclear, stop. Name what's confusing. Ask.
 
 ---
@@ -31,7 +32,10 @@ Before implementing:
 - No abstractions for single-use code.
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
+- **When this collides with guideline 9** — a loud failure for a case that cannot reasonably occur — **this one wins**: one comment line saying the case is not handled, not a branch that handles it.
 - If you write 200 lines and it could be 50, rewrite it.
+- **Given a batch of review findings, group them by root cause before fixing any of them.** Several findings usually share one construct, and deleting that construct is a smaller change than adding a guard for each finding it produced. Working down the list in order hides the grouping, because each finding on its own reads as "something is missing here".
+- **When one thing keeps breaking, or fixing A breaks B, stop asking how to fix it and ask whether the spec is wrong.** Repeated defects in one place, and a fix that costs a regression somewhere else, are both evidence about the requirement rather than about the code — and "how do I fix this" is a question that never reaches that. Two answers are legitimate and a third is not: change the spec, or drop the case and **write down that it is not supported**. Patching again is the one that is not, because each round adds a guard, and the guards are what the next round breaks.
 
 Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
@@ -57,7 +61,7 @@ Test: Every changed line should trace directly to the user's request.
 
 ## 4. Goal-Driven Execution
 
-**Define success criteria. Loop until verified.**
+**Define success criteria. Loop until verified — within the budget the task set.**
 
 Transform tasks into verifiable goals:
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
@@ -72,6 +76,8 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria allow independent iteration. Weak criteria ("make it work") require constant clarification.
+
+**The loop has an end.** When the task carries a size or review budget, spending it ends the loop: report what is still unverified and by how much the budget was missed, and do not open another round. A criterion that can always be made stricter is not a criterion, it is a direction.
 
 ---
 
@@ -134,6 +140,8 @@ Inline note format:
 // Using Map instead of plain object: preserves insertion order,
 // needed for deterministic output in tests.
 ```
+
+**One sentence per decision.** A measurement, or an argument longer than that, goes into a references file the note points at; the note itself carries the conclusion and the number. A file where a quarter of the lines explain the other three quarters has moved the complexity, not removed it.
 
 ---
 

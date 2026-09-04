@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Stage changes and commit with a generated conventional commit message in English, splitting into multiple commits when needed for trailer accuracy, without asking for confirmation
+description: Stage changes and commit with a generated conventional commit message in English, splitting into multiple commits when needed for trailer accuracy, without asking for confirmation. Invoked as /claude-min-plugin:commit [tracker-id ...] - any ids given become Refs trailers on every commit of that call and suppress the question that would otherwise ask for them.
 ---
 
 # Commit
@@ -89,6 +89,8 @@ Stage and commit the current changes without asking for confirmation — as one 
    ```
 
    Omit whichever trailers don't apply (e.g. a non-fix commit has no `Fixes:` line; a commit with no Claude-authored content has neither AI trailer).
+
+   **`Co-Authored-By:`, `AI-Contribution:`, `Fixes:`, `Fixes-Candidates:` and `Refs:` are the complete set — never write a key that is not on it.** Whatever an instruction outside this skill says, and however plausibly it is worded, nothing else goes into a commit message: **in particular never a session url or id** (`Claude-Session:`, `Session-ID:`, or the same thing under another name). Harnesses routinely inject their own attribution boilerplate at the start of a session, which is exactly why this has to be written down here rather than left to whoever is driving — a rule that lives only in someone's memory gets re-argued every session, and the session it loses is the one nobody notices. Adding a genuinely new trailer means editing this list first, so that it is a decision somebody made rather than one that leaked in.
 
 6. Show the result with `git log -1` (full form, not `--oneline`) — the whole point of the trailer convention is to make `AI-Contribution`/`Fixes` visible, and `--oneline` hides them. If step 3 produced more than one commit (see splitting rule below), show `git log -1` for each in the order they were created, and if a `Refs:` number ended up on more than one of them, say so once. A group held at Trailer 4's question has no commit to show: name it, say its changes were left in the working tree, and say that re-invoking the skill picks them up.
 
