@@ -22,7 +22,7 @@ claude --plugin-dir /path/to/this/repo
 
 | Skill | 功能 |
 |---|---|
-| `/claude-min-plugin:coding-guidelines` | 十條準則，涵蓋臆測、範圍蔓延、資安、相依套件、回歸風險與錯誤處理。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
+| `/claude-min-plugin:coding-guidelines` | 一整套準則，涵蓋臆測、範圍蔓延、資安、相依套件、回歸風險、根因與錯誤處理。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
 | `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
@@ -65,7 +65,7 @@ reviewer 都不能碰 `TASKS.md`，發現缺口一律走 `TASK-CHANGES.md` 提�
 
 安裝後以命名空間出現在 `@` 選單：`@claude-min-plugin:developer`、`@claude-min-plugin:reviewer`。
 兩者都在 frontmatter 以 `skills: coding-guidelines, workflow` 於啟動時把**完整**準則載入自己的
-context，所以它們是真的照那十條做事，而不是只拿到 session 注入的那份摘要。
+context，所以它們是真的照那套準則做事，而不是只拿到 session 注入的那份摘要。
 
 | Agent | 定位 |
 |---|---|
