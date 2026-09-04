@@ -35,6 +35,7 @@ Before implementing:
 - **When this collides with guideline 9** — a loud failure for a case that cannot reasonably occur — **this one wins**: one comment line saying the case is not handled, not a branch that handles it.
 - If you write 200 lines and it could be 50, rewrite it.
 - **Given a batch of review findings, group them by root cause before fixing any of them.** Several findings usually share one construct, and deleting that construct is a smaller change than adding a guard for each finding it produced. Working down the list in order hides the grouping, because each finding on its own reads as "something is missing here".
+- **When one thing keeps breaking, or fixing A breaks B, stop asking how to fix it and ask whether the spec is wrong.** Repeated defects in one place, and a fix that costs a regression somewhere else, are both evidence about the requirement rather than about the code — and "how do I fix this" is a question that never reaches that. Two answers are legitimate and a third is not: change the spec, or drop the case and **write down that it is not supported**. Patching again is the one that is not, because each round adds a guard, and the guards are what the next round breaks.
 
 Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
