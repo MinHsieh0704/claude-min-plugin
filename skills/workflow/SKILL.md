@@ -169,11 +169,12 @@ disagree, and put the disagreement in your report instead.
 - **The review budget is what ends reviewing** - the passes the `Rigor` level allows, or an explicit
   `Review budget`. Nothing is counted or compared to decide this: a rule that read the severities a
   pass happened to raise would end a `high` task on its first pass as readily as a `low` one, and
-  would end a task on a `FAIL` whose requirement was never met. **A pass that returns `FAIL` does
-  not spend the budget** - the budget limits how many times the work is reviewed afresh, not how
-  many times a named fix is confirmed, and counting it would leave `low` unable to finish any task
-  that fails once. A reviewer asked for a pass past the budget says so in its report rather than
-  writing one.
+  would end a task on a `FAIL` whose requirement was never met. **Every pass spends one, whatever
+  its verdict** - the budget is the highest pass number allowed, so a reviewer knows on opening the
+  file whether it is holding the last one. Each level is priced a pass above the fresh reviews it
+  intends, and that spare pass is what confirms a returned `FAIL`; exempting `FAIL` instead would
+  split the budget from the pass number and leave the last pass unknowable until it was over. A
+  reviewer asked for a pass past the budget says so in its report rather than writing one.
 - **On the last pass the budget allows, recommend a ruling for every finding still `OPEN`** - naming
   the ids and which ruling: `WONTFIX` for anything the level or `Out of scope` put outside scope,
   matching what `decide` calls the expected outcome there, and `DEFERRED` for what is real and worth
@@ -284,7 +285,7 @@ situations before the work exists, so the spec asks for none of them - it asks f
 | | `low` (default) | `medium` | `high` |
 |---|---|---|---|
 | Size budget | 2x the lines the task replaces; 300 for new work | 3x; 500 | none - reported, not capped |
-| Review budget | 1 pass | 2 | 3 |
+| Review budget | 2 passes | 3 | 4 |
 | In scope | situations met in normal use, plus any silent loss | also rare situations that fail loudly | every reachable situation |
 | Findings against the tests themselves | `Consider` | `Consider` | `Should fix` when the test guards a past defect |
 | Proof required of a test | it was run and passed | it was seen to fail before it passed | the same |
