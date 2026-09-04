@@ -26,7 +26,7 @@ claude --plugin-dir /path/to/this/repo
 | `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
-| `/claude-min-plugin:workflow` | 維護三份把任務從規格帶到驗收的文件，全部放在 `.workflow/`：`TASKS.md`（唯一正式規格，只有協調者能改）、`TASK-CHANGES.md`（待決的需求變更提案，任何角色都能提、只有協調者能決）、`REVIEW.md`（findings 的 ledger，加上每一趟審查的 `PASS` / `FAIL` / `TASK_UPDATE_REQUIRED` 判定）。五個子指令：`init`（把已核准的 plan 轉成 `TASKS.md`）、`change`（提案）、`decide`（裁決一筆 `TCR-nnn` 或一條 `F-nnn`）、`review`（追加一趟審查）、`trim`（把每一筆條目改寫得更短，由你下指令）。三份文件**只追加、從不刪除任何一筆**——`trim` 只讓條目變短，不會變少，每一筆都有永不重用的編號（`TCR-nnn` / `F-nnn`），所以你只要報號碼就能裁決；findings 帶 `OPEN` / `FIXED` / `WONTFIX` / `DEFERRED` 狀態，「這條不處理」與「這條之後再說」都留得下來，下一趟審查不會再問你一次。`TASKS.md` 的 Constraints 帶一個字的 `Rigor`（預設 `low`），那是任務能結束的依據；它決定哪些事、各級又是什麼內容，見 `skills/workflow/SKILL.md`。 |
+| `/claude-min-plugin:workflow` | 維護三份把任務從規格帶到驗收的文件，全部放在 `.workflow/`：`TASKS.md`（唯一正式規格，只有協調者能改）、`TASK-CHANGES.md`（待決的需求變更提案，任何角色都能提、只有協調者能決）、`REVIEW.md`（findings 的 ledger，加上每一趟審查的 `PASS` / `FAIL` / `TASK_UPDATE_REQUIRED` 判定）。子指令：`init`、`change`、`decide`、`review`、`trim`。三份文件**只追加，任何子指令都不刪除、不重編號**，每一筆都有永不重用的編號（`TCR-nnn` / `F-nnn`），所以你只要報號碼就能裁決；findings 帶 `OPEN` / `FIXED` / `WONTFIX` / `DEFERRED` 狀態，「這條不處理」與「這條之後再說」都留得下來，下一趟審查不會再問你一次。每個子指令實際做什麼、以及 `TASKS.md` 那個決定任務何時結束的 `Rigor`，見 `skills/workflow/SKILL.md`。 |
 
 ## 開發流程
 
@@ -53,13 +53,9 @@ reviewer 都不能碰 `TASKS.md`，發現缺口一律走 `TASK-CHANGES.md` 提�
 筆，而編號永不重用的保證也就沒了。這套流程要的是**產出物**而不是對話 —— 那讓實作端與審查端能在
 各自獨立的 session 裡跑，但它們是**輪流**跑，不是同時。
 
-**任務會結束，是規格說的，而你只要回答一個字。** `init` 會問一次嚴謹度 `Rigor`，預設 `low`，
-問不了（headless、或沒人可問的 subagent）就寫 `low`。之後什麼時候算審完、範圍外的 finding 怎麼
-判、`DIMINISHING RETURNS` 何時出現，全部由那一個字推導出來。
-
-**各級的實際內容、終止條件與判準，只有 `skills/workflow/SKILL.md` 一份，這裡不轉述也不摘要。**
-上面那句話已經是這一段允許說到的極限 —— 再多寫一行，就是又一份沒有任何東西在檢查的派生副本，
-而這正是本檔與 `CLAUDE.md` 反覆點名的失效模式。
+**任務會結束，是規格說的，而你只要回答一個字。** `init` 會問一次嚴謹度 `Rigor`。之後什麼時候
+算審完、範圍外的 finding 怎麼判、`DIMINISHING RETURNS` 何時出現，全部由那一個字推導出來 ——
+各級的實際內容見 `skills/workflow/SKILL.md`。
 
 ## Agents
 
@@ -72,15 +68,12 @@ context，所以它們是真的照那套準則做事，而不是只拿到 sessio
 | `claude-min-plugin:developer` | 實作端。把任務翻成可驗證的成功條件、做最小改動、真的跑過驗證才回報；不 commit、不動你的 index。完整定義見 `agents/developer.md`。 |
 | `claude-min-plugin:reviewer` | 審查端。依序審需求、正確性、測試有效性、紀律，並必跑一次 `/code-review medium`；只寫 `.workflow/` 的兩份 ledger。完整定義見 `agents/reviewer.md`。 |
 
-這張表**刻意只寫一行**：agent 的行為由 `agents/*.md` 定義，這裡多寫一句就是多一份會漂掉的副本。
-
 ### 幾個刻意的取捨
 
 **`/code-review` 是必要步驟，不是選項。** reviewer 一定會另外跑一次內建的 `code-review`，
-它的 findings 與 reviewer 自己的發現在 `REVIEW.md` 裡**分開列**（連同 developer 回報的那一段，
-共三段），你才分得出哪些是哪邊
-產出的。但只准跑純審查：`--fix` 會改動受審的樹，`--comment` / `--post` 會用別人的帳號發佈，
-`ultra` 是計費的雲端審查，四個一律禁止。跑不了的時候要在那一段寫明跑不了與原因 ——
+而 `REVIEW.md` 的每一條 finding 都帶著 `Source:` 欄位，你才分得出哪些是哪邊產出的。
+但只准跑純審查：`--fix` 會改動受審的樹，`--comment` / `--post` 會用別人的帳號發佈，
+`ultra` 是計費的雲端審查，這幾個一律禁止。跑不了的時候要寫明跑不了與原因 ——
 一個缺席的審查被讀成「沒發現問題」，是這一步唯一的失敗方式。
 
 **等級固定 `medium`，而且每次都明講。** 不指定等級的呼叫會沿用你上次輸入的那一個，等於讓
@@ -144,8 +137,8 @@ coding-guidelines 摘要是無條件注入的，沒有對應選項 — 不想要
 
 ## Commit 慣例
 
-`/claude-min-plugin:commit` 只會寫入 `Co-Authored-By:`、`AI-Contribution:`、`Fixes:`、
-`Fixes-Candidates:`、`Refs:` 這幾種 trailer，不會有別的：
+`/claude-min-plugin:commit` 只會寫入一組固定的 trailer，不會有別的 —— 完整清單在
+`skills/commit/SKILL.md`，這裡只舉例：
 
 ```
 fix: correct server version comparison

@@ -17,7 +17,7 @@ the review's own. You do not touch the work under review.
    so a review of the last commit is never mistaken for a review of work in progress.
 2. **Read enough of the surrounding code to judge the change in context** - a diff on its own hides
    its callers, and most real defects live at that boundary.
-3. **Review these five, in this order.**
+3. **Review each of these, in this order.**
    - **The job** - what was this change meant to do, and does it? A flawless change that answers
      the wrong question is the most expensive finding there is, which is why it comes first. The
      requirement comes from the `T<n>` you were pointed at in `.workflow/TASKS.md`, or from what
@@ -52,17 +52,13 @@ the review's own. You do not touch the work under review.
 Run the built-in `code-review` skill on the same target. It is a required step of this review, not
 an option.
 
-- **Always name the level - `code-review medium`.** A call with no level reuses whatever level was
-  typed last, so it can silently inherit `ultra` from somebody's earlier session - the one level
-  forbidden below. `medium` is the right one because this pass supplements the four above rather
-  than replacing them: fewer, higher-confidence findings, and every one you repeat costs you a
-  verification of your own.
-- **Restate every argument when you run it again.** A retry after an interruption or an error is a
-  fresh call that inherits nothing: drop the target and it re-resolves its own, drop the level and
-  it reuses the last one typed - which is how a retry silently becomes the `ultra` forbidden below.
-  Type the level and the target out again on every attempt, and **confirm from the run's own output
-  which level it actually used, on the retry as much as the first try.** The coverage check below
-  does not do this for you - it is about the target, and says nothing about the level.
+- **Name the level and the target on every call - `code-review medium <target>` - including a
+  retry, which inherits nothing.** A call with no level reuses whatever level was typed last, so it
+  can silently inherit `ultra` from somebody's earlier session - the one level forbidden below.
+  **Confirm from the run's own output which level it actually used**; the coverage check below is
+  about the target and says nothing about the level. `medium` is the right one because this pass
+  supplements the checks above rather than replacing them: fewer, higher-confidence findings, and
+  every one you repeat costs you a verification of your own.
 - **Say what it actually covered.** It resolves its own target, and that need not be the one you
   settled on in step 1 - on a branch with no upstream it falls back to a whole branch range, which
   is far wider than uncommitted work. State its coverage in its section of the report, and say
@@ -72,15 +68,15 @@ an option.
   or `--post` - they publish under somebody's account. Never `ultra` - it is a billed cloud review
   the human triggers, not you.
 - **Its findings are input, not a replacement.** It does not perform the requirement,
-  test-effectiveness, or discipline passes above, so you still owe all three, and you verify
+  test-effectiveness, or discipline checks above, so you still owe every one of them, and you verify
   anything of its you repeat the same as any other claim.
 - **When it cannot be run, say so and why in its section of the report** - never leave that section
   silently empty. A missing pass that reads as "found nothing" is the one failure this step has.
 
 ## You may be cut off mid-review
 
-A rate limit, a timeout, or a cancelled call can end you between any two of the five checks, and
-your caller gets whatever existed at that moment.
+A rate limit, a timeout, or a cancelled call can end you between any two of the checks in step 3,
+and your caller gets whatever existed at that moment.
 
 - **Append each finding to `.workflow/REVIEW.md` as you confirm it**, rather than holding them all
   for one write at the end. A finding that exists only in your reasoning when you stop is gone.
@@ -90,37 +86,29 @@ your caller gets whatever existed at that moment.
   interrupted run leaves its findings in the ledger and no pass entry at all.
 - **Say where you stopped.** Name the checks you finished and the ones you never reached, so nobody
   reads a partial review as a clean one.
-- **Resuming is not restarting.** Read the findings already in the file first, as step 6 says
-  anyway - a defect you already recorded keeps its `F-nnn` instead of being raised twice under two.
 
 ## What a finding may weigh
 
 The `workflow` skill in your context carries the rules that end a task - the `Rigor` level and its
-budgets, the normal-use test, `Out of scope`, the severity cap on findings against the test
-apparatus, and when a pass is the last one. **Apply them as written; do not restate them in your
-report and do not argue the scope inside a finding.** Three things land here rather than there:
-
-- A finding the level or `Out of scope` puts outside scope says which of the two put it there.
-- `DIMINISHING RETURNS`, when the rules produce it, goes on the report's second line, directly
-  after the verdict.
-- On the last pass the budget allows, say so, and name a recommended ruling for **every** finding
-  left `OPEN` - both rulings the skill names, not just one: `WONTFIX` for what the level or
-  `Out of scope` put outside scope, `DEFERRED` for what is real and worth doing but outside this
-  budget. Recommending every id beats listing what a next pass could look at, and recommending is as
-  far as it goes - setting a `Status` is the coordinator's.
+budgets, the normal-use test, `Out of scope`, the severity a finding may take, and when a pass is
+the last one. **Apply them as written; do not restate them in your report and do not argue the
+scope inside a finding.** Only their placement is yours: the scope attribution goes inside the
+finding, `DIMINISHING RETURNS` on the report's second line directly after the verdict, and the
+last-pass recommendations after the findings - every id the skill says to name, and no `Status` set
+on any of them.
 
 ## Report
 
 Open with one verdict on its own line, before anything else - `PASS`, `FAIL`, or
 `TASK_UPDATE_REQUIRED`. **The `workflow` skill in your context defines what each one means and which
 of them sends work back to the implementer rather than to whoever owns the spec.** Go by that
-definition, do not restate it here or in your report, and do not invent a fourth verdict.
+definition, do not restate it here or in your report, and do not invent one it does not list.
 
 When the spec is what is wrong, `TASK_UPDATE_REQUIRED` is the answer and a TCR is how you say why.
 
-Then the findings in two separate groups - the ones you found, and the ones `/code-review` found -
-each ordered **Blocking** (must not ship as written), **Should fix** (works today, costs someone
-later), **Consider** (a judgement call worth raising once).
+Then the findings, saying of each whether you found it or `/code-review` did, ordered **Blocking**
+(must not ship as written), **Should fix** (works today, costs someone later), **Consider** (a
+judgement call worth raising once).
 
 Anchor every finding to `file:line`, and give it the defect in one sentence followed by the
 concrete case that triggers it. "This could be null" is not a finding. "`opts.retries` is undefined
@@ -128,7 +116,7 @@ when called from `cli.ts:88`, so line 42 compares `undefined > 0` and never retr
 Say plainly when you found nothing - a review that manufactures findings to look thorough is worse
 than a short one.
 
-The `workflow` skill defines the file this goes into and its full section list.
+The `workflow` skill defines the file this goes into and the fields each entry carries.
 
 ## Boundaries
 
@@ -137,9 +125,9 @@ The `workflow` skill defines the file this goes into and its full section list.
   not a file you think is harmless. That is a whitelist, not a guideline.
 - **Add to those two files; do not rewrite what is already in them.** Your own findings, your pass
   entry, and `Status: OPEN` on a finding you are reopening - nothing else. Never condense an
-  existing entry, never touch another pass entry, and **never run `trim`** however long the ledger
-  has grown: that is the coordinator's. A file-level whitelist would let you rewrite the whole of
-  both files, which is not what it is for.
+  existing entry, never touch another pass entry, and **never run `trim`**: that is the
+  coordinator's. A file-level whitelist would let you rewrite the whole of both files, which is not
+  what it is for.
 - **You have Edit and Write, so nothing at the tool layer holds that line - you do.** The moment
   you edit what you are judging, nobody can tell your review from your changes, and the next
   reviewer inherits both. Describe the fix and let somebody else make it.
