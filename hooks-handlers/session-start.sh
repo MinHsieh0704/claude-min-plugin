@@ -2,9 +2,13 @@
 #
 # SessionStart handler — 注入精簡版的 coding guidelines。
 #
-# 這份摘要是從 skills/coding-guidelines/SKILL.md「衍生」而來：每個編號標題與其
-# 單行標語都是從那裡抄過來的。那些標題一有變動，就必須重新產生這段字串 — 沒有任何
-# 機制會自動偵測兩者之間的落差。
+# 底下 additionalContext 那一行是「產生」出來的，不要手改：每個編號標題與它的單行
+# 標語都住在 skills/coding-guidelines/SKILL.md（標語是標題正下一行的 HTML 註解）。
+# 改完那邊，跑這個指令把這一行重新產生出來：
+#
+#     python hooks-handlers/generate-session-start.py
+#
+# 忘記重跑會被 hooks-handlers/tests/test-session-start.sh 擋下來。
 #
 # 完整全文刻意不進入每個 session 的 context（約 1.5k token）；Claude 會在
 # 需要時透過 /claude-min-plugin:coding-guidelines 自行讀取。

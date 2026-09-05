@@ -12,6 +12,7 @@ Universal behavioral guidelines to reduce common LLM coding mistakes. These rule
 ---
 
 ## 1. Think Before Coding
+<!-- summary: don't assume, don't hide confusion, surface tradeoffs; any set of options you offer must include one that does less; if something is unclear, stop and ask. -->
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -25,6 +26,7 @@ Before implementing:
 ---
 
 ## 2. Simplicity First
+<!-- summary: the minimum code that solves the problem; nothing speculative, no abstractions for single-use code, no branch for a case that cannot reasonably occur - where that collides with 9, 2 wins, and you leave one comment line saying the case is not handled. -->
 
 **Minimum code that solves the problem. Nothing speculative.**
 
@@ -40,6 +42,7 @@ Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simpl
 ---
 
 ## 3. Surgical Changes
+<!-- summary: touch only what you must, match existing style, and clean up only the orphans your own change created. -->
 
 **Touch only what you must. Clean up only your own mess.**
 
@@ -58,6 +61,7 @@ Test: Every changed line should trace directly to the user's request.
 ---
 
 ## 4. Goal-Driven Execution
+<!-- summary: turn the task into verifiable success criteria and loop until they pass; where the task sets a size or review budget, spending it also ends the loop - then report rather than open another round. -->
 
 **Define success criteria. Loop until verified — within the budget the task set.**
 
@@ -80,6 +84,7 @@ Strong success criteria allow independent iteration. Weak criteria ("make it wor
 ---
 
 ## 5. Security Is Non-Negotiable
+<!-- summary: never hardcode secrets, treat all external input as untrusted, never hand-roll crypto; flag any change touching auth, authorization, or persistence. -->
 
 **Regardless of task triviality, the following lines must not be crossed.**
 
@@ -92,6 +97,7 @@ Strong success criteria allow independent iteration. Weak criteria ("make it wor
 ---
 
 ## 6. Dependency Awareness
+<!-- summary: a new dependency is a decision, not a default; state the reason, version, and license. -->
 
 **Adding a new dependency is a decision, not a default.**
 
@@ -105,6 +111,7 @@ Before introducing a new package:
 ---
 
 ## 7. Regression Awareness
+<!-- summary: name the downstream callers and changed contracts your edit affects before submitting. -->
 
 **Your changes must not silently break things elsewhere.**
 
@@ -124,6 +131,7 @@ The following call sites need verification:
 ---
 
 ## 8. Explain Non-Obvious Decisions
+<!-- summary: say why A over B in one sentence, and why code that looks shortenable intentionally is not; measurements and longer arguments go to a references file. -->
 
 **The code is done, but the decision process must not be a black box.**
 
@@ -144,6 +152,7 @@ Inline note format:
 ---
 
 ## 9. Fail Loudly, Not Silently
+<!-- summary: no empty catch blocks, no silent defaults on anomalous data, no type assertions masking real errors. -->
 
 **Bad silence is harder to debug than obvious errors.**
 
@@ -155,6 +164,7 @@ Inline note format:
 ---
 
 ## 10. Context Sync Before Long Tasks
+<!-- summary: more than 3 steps or more than 3 files: state the plan and get confirmation before starting. -->
 
 **For long tasks, confirm alignment before starting.**
 
@@ -174,6 +184,7 @@ Do not start execution before the user confirms.
 ---
 
 ## 11. Fix the Cause, Not the Symptom
+<!-- summary: group a batch of review findings by root cause before fixing any, since deleting the construct they share beats guarding each one; when one thing keeps breaking or a fix costs a regression elsewhere, the spec is the suspect, not the code. -->
 
 **Repetition is evidence. Read it before writing another guard.**
 

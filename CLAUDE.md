@@ -12,7 +12,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines, which reach each session through the `session-start.sh` summary plus `/claude-min-plugin:coding-guidelines` on demand. **Never create a second copy.**
 
-`hooks-handlers/session-start.sh` embeds a *derived* summary of that file's numbered headings. When a heading or its tagline changes, regenerate the summary by hand. `hooks-handlers/tests/test-session-start.sh` covers half of that: it goes red when a numbered heading is renamed, renumbered, added or removed without the summary following. **The taglines are not covered and nothing detects a stale one** — a tagline condenses a whole section rather than copying any line in it, so there is nothing to compare it against short of a second hand-maintained copy.
+`hooks-handlers/session-start.sh` no longer holds a hand-written summary. Each numbered heading in `SKILL.md` carries its one-line tagline in an adjacent `<!-- summary: ... -->` comment, and the handler's `additionalContext` line is produced from those by `hooks-handlers/generate-session-start.py`. **Never hand-edit that line** — edit the comment beside the heading and re-run the generator. `hooks-handlers/tests/test-session-start.sh` regenerates and compares byte for byte, so a handler that is not the generator's current output turns it red. **What no check can reach is a tagline that no longer describes its own section** — a condensation has nothing to be mechanically compared against, so that one stays editorial.
 
 Both agents in `agents/` reach the guidelines the other way — by *reference*, through `skills: coding-guidelines, workflow` in their frontmatter, which loads those files into the agent's context at startup with no tool call. The bare skill name is what resolves for a plugin's own skill; the namespaced `claude-min-plugin:coding-guidelines` form is not what that field takes. Keep it a reference and never a restatement: an agent that spelled the rules out again would be one more derived copy on a pile that already holds the `session-start.sh` summary and the `README.md` language table. The `README.md` Agents table is deliberately one line per agent — what it is for, and where its definition lives — so a change to `agents/*.md` rarely touches it; keep it that short rather than letting it grow back into a copy that has to be edited in lockstep with nothing to detect its drift. The same applies to the `workflow` skill's `Rigor` table: `README.md` points at it and must never reproduce it. An agent may say which *kinds* of guideline apply to its job, but must never hard-code rule numbers or re-list the rules themselves.
 
@@ -45,7 +45,7 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
-bash hooks-handlers/tests/test-session-start.sh   # expect 9/9 - the guideline summary has not drifted
+bash hooks-handlers/tests/test-session-start.sh   # expect 14/14 - the handler is the generator's output
 git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
