@@ -45,6 +45,7 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
+bash hooks-handlers/tests/test-session-start.sh   # expect 9/9 - the guideline summary has not drifted
 git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
