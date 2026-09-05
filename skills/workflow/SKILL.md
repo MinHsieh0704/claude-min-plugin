@@ -372,15 +372,25 @@ an open `Blocking` finding is open whatever the last pass concluded.
 
 The three verdicts:
 
-- **`PASS`** - the requirement is met and nothing blocking was found.
+- **`PASS`** - the requirement is met, nothing blocking was found, and meeting the requirement
+  leaves nothing in `Goal` or `Constraints` unreached. **That last clause is the only thing keeping
+  this verdict off the second case below**, which it would otherwise cover as squarely - and it is
+  satisfied by default: with no line you can point at, you have met it.
 - **`FAIL`** - the implementation does not meet the requirement, or something blocking was found.
   The spec is fine, the code is not.
-- **`TASK_UPDATE_REQUIRED`** - the code cannot be judged, because `TASKS.md` does not say what
-  should happen here. Raise a TCR and return this rather than guessing which side is wrong.
+- **`TASK_UPDATE_REQUIRED`** - the verdict cannot be recorded against `TASKS.md` as it stands:
+  either the spec does not say what should happen here, or it says something that misses the `Goal`
+  - the code meets its requirement, and meeting that requirement still leaves the stated outcome
+  unreached. Raise a TCR and return this rather than guessing which side is wrong. **The second
+  case needs the line in `Goal` or `Constraints` that the requirement, correctly implemented, fails
+  to reach; without one you have a finding and not a verdict.** (Why the silent-only reading was not
+  enough, and why widening this definition alone reached nobody: `references/design-notes.md`.)
 
 `FAIL` and `TASK_UPDATE_REQUIRED` are genuinely different: one goes back to the implementer, the
 other goes back to the coordinator. **Returning `FAIL` where the spec was silent asks somebody to
-fix code against a requirement that was never written down.**
+fix code against a requirement that was never written down, and returning `PASS` where the
+requirement points at the wrong thing records the task as finished at the last moment anybody could
+have said otherwise.**
 
 This file defines the skeleton, not the findings. How a finding is worded and how severe it is
 belong to whoever performed the review.

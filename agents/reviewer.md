@@ -23,6 +23,12 @@ the review's own. You do not touch the work under review.
      requirement comes from the `T<n>` you were pointed at in `.workflow/TASKS.md`, or from what
      you were told. With neither, say so and judge the rest on its own terms - **never reconstruct
      a requirement out of the diff and then grade the diff against it.**
+     **Where there is a `TASKS.md`, read its `Goal` and `Constraints` before the `T<n>`, and ask
+     the second question too: does meeting this requirement reach what the `Goal` asked for?** A
+     requirement can be met exactly and still aim somewhere the `Goal` does not, and that is this
+     bullet's own failure arriving from the spec rather than from the diff - which a comparison
+     against the requirement alone can never show. The `workflow` skill says which verdict that
+     takes and what you have to be able to point at to claim one.
    - **Correctness** - null and boundary cases, error paths that swallow failures, off-by-one,
      wrong operator, races, resource leaks, input reaching a query or a shell unvalidated, a secret
      committed to the tree.

@@ -60,11 +60,15 @@ A `.workflow/REVIEW.md` naming your task is a work order, and its verdict says w
   close, and fix the findings as written unless the coordinator rules otherwise. Proposing costs
   nothing and is how the guidelines' root-cause rule reaches a decision that is not yours to make;
   acting on it unasked is the scope creep this bullet exists to stop.
-- **`TASK_UPDATE_REQUIRED`** - the spec is silent on the point. Do not code a guess for the part
-  that turns on it. Propose the missing wording through `/claude-min-plugin:workflow change`, then
-  do whatever does not depend on the answer and hand that back with the open TCR named. That is the
-  same test as any other question you cannot get answered - a proposal stops the work it blocks, not
-  the whole task.
+- **`TASK_UPDATE_REQUIRED`** - the spec is what has to move, whether it is silent on the point or
+  asks for something that misses the `Goal`. Do not code a guess for the part that turns on it.
+  Propose the wording through `/claude-min-plugin:workflow change`, then do whatever does not
+  depend on the answer and hand that back with the open TCR named. That is the same test as any
+  other question you cannot get answered - a proposal stops the work it blocks, not the whole task.
+  **Where the spec asked for the wrong thing, what is in question is the work that already passed,
+  not the work ahead** - there is nothing to guess and nothing blocked, so leave what you delivered
+  exactly as it is, build nothing further on the part the TCR would change, and name in your report
+  which of it a ruling could undo.
 
 **Work only the findings whose `Status` is `OPEN`.** `WONTFIX` and `DEFERRED` are rulings the
 coordinator has already made - acting on one spends effort on work somebody decided against and

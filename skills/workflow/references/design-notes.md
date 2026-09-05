@@ -61,3 +61,48 @@ id 跨章節唯一的聲明。
 
 改成 `Source:` 欄位後，四條衍生規則一起消失，每個角色的寫入都回到真正的檔尾 append。這不是新
 發明的形狀 —— 姊妹 ledger `TASK-CHANGES.md` 一直就是用 `Source:` 欄位。
+
+---
+
+## `TASK_UPDATE_REQUIRED` 為什麼也涵蓋「規格說了、而且說錯」
+
+原本三個 verdict 之間有一格沒有出口：
+
+- `FAIL` —— 規格對、程式錯。
+- `TASK_UPDATE_REQUIRED` —— 規格**沒說**，所以判不了。
+- 沒有人管的那一格 —— 規格**說了**，程式忠實達成了它，而它瞄的不是 `Goal` 說的那個東西。
+
+2026-09-05 一次實跑撞上第三格：審查端診斷出某條 Requirement 把比對範圍指向了錯的對象，實測出
+因此漏掉的靜默失效，然後回了 `PASS` 與 `TASKS.md update needed: no` —— 因為當時唯一能把工作
+送回協調者的 verdict 要求規格是「沉默」的。訊號被壓成一條 `Consider`，掛在一個讀起來就是
+「這件事做完了」的 pass entry 底下。
+
+`Consider` 接不住它，是因為收件人不同：finding 交給下一個實作者，而只有規格的擁有者能動規格。
+降級成 finding 等於把它寄給一個無權處理的人。
+
+**判準為什麼是「指名 `Goal` 或 `Constraints` 的某一行」**：這一格通往協調者，而協調者是唯一
+不能再往下委派的人。沒有判準的話，任何「我會用別的做法」都能停下所有人的工作。要求指名一行
+同時做到兩件事 —— 它可查證，而且它把「規格達不到自己宣告的結果」跟「審查端有別的偏好」分開；
+後者本來就是 finding 的用途。
+
+順帶記一件事實：`agents/reviewer.md` 一直寫的是 "When the spec is what is wrong"，也就是較寬的
+讀法，但它同時要求審查端以 `workflow` skill 的定義為準。兩份檔案不一致時，被指定為權威的那一
+份贏了，而它當時是窄的。
+
+**為什麼光改定義沒有用。** 這一節的第一版只動了 `TASK_UPDATE_REQUIRED` 的定義，隨即被一次
+`/code-review` 打回，兩個理由都成立：
+
+- `PASS` 的定義原封不動，而它同樣涵蓋這個情況 —— 「requirement is met and nothing blocking was
+  found」在這裡字面上就是真的，而且它排在前面先被讀到。**開了第二道門卻沒關掉第一道，等於
+  沒開。**
+- `agents/reviewer.md` 全篇沒有出現 `Goal`（實測 grep 為 0）。它 step 3 的判準只來自 `T<n>` 的
+  Requirement，所以一個永遠不載入 `Goal` 的流程，不可能觀察到「達成了 Requirement 卻達不到
+  `Goal`」。定義改了、會觸發它的那一步沒有加，規則就到不了任何人手上。
+
+第二點還有一層諷刺：那個 bullet 自己就寫著「A flawless change that answers the wrong question is
+the most expensive finding there is」—— 它描述的正是這個失效，但它的做法只拿 Requirement 比對，
+所以看不到自己那句話。
+
+**因此這一格要成立需要三樣東西同時在場**：`PASS` 的排除子句、`TASK_UPDATE_REQUIRED` 的第二個
+分支、以及 reviewer 流程裡真的去讀 `Goal` 的那一步。少任何一樣，剩下兩樣都是裝飾 —— 而裝飾比
+沒改更糟，因為它看起來已經修好了。
