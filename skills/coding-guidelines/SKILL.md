@@ -1,6 +1,6 @@
 ---
 name: coding-guidelines
-description: Universal coding guidelines that reduce common LLM coding mistakes - think before coding, simplicity first, surgical changes, goal-driven execution, security, dependency awareness, regression awareness, explaining non-obvious decisions, failing loudly, and context sync before long tasks. Read this before writing or modifying code in any language or stack.
+description: Universal coding guidelines that reduce common LLM coding mistakes - think before coding, simplicity first, surgical changes, goal-driven execution, security, dependency awareness, regression awareness, explaining non-obvious decisions, failing loudly, context sync before long tasks, and fixing the cause rather than the symptom. Read this before writing or modifying code in any language or stack.
 ---
 
 # Coding Guidelines
