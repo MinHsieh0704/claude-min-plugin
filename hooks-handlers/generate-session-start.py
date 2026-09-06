@@ -6,6 +6,10 @@ generate-session-start.py — 從 SKILL.md 重新產生 session-start.sh 的那�
     python hooks-handlers/generate-session-start.py
     python hooks-handlers/generate-session-start.py <SKILL.md> <session-start.sh>
 
+需要 Python 3，這是明確的前提而不是還沒補的缺口 —— Python 2 不處理（底下用了 print
+的關鍵字參數，在 2 底下是語法錯誤）。Windows 上請用 python 而不是 python3：後者常常是
+Microsoft Store 的空殼。
+
 摘要裡的十一個條目不再是手抄的：編號與標題直接取自 skills/coding-guidelines/SKILL.md
 的編號標題，標語取自標題「正下一行」的 <!-- summary: ... --> 註解。改了哪一節就改那一節
 的註解，然後重跑這支腳本 —— 兩份文字之間沒有東西可以走鐘，因為只剩一份。

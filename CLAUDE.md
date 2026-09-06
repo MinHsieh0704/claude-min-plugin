@@ -42,6 +42,8 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 
 ## Verification
 
+**These commands assume the toolchain this repo is developed on, and that assumption is deliberate rather than a gap waiting to be closed: Windows with Git Bash, GNU `sed` and `grep`, and Python 3 invoked as `python` (on Windows `python3` is usually the Microsoft Store stub, which prints nothing and exits 49).** Nothing here is written to survive cmd.exe, PowerShell, BSD/macOS `sed`, or Python 2, and the two files that depend on those specifics say so at the point where they depend on them. Porting is a decision somebody makes, not a bug somebody fixes.
+
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17

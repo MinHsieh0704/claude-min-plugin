@@ -25,7 +25,12 @@
 # 用法：
 #   bash hooks-handlers/tests/test-session-start.sh [handler] [skill-md]
 #
-# 在 Windows 上：請從 Git Bash 執行（不是 cmd.exe／PowerShell）。
+# 執行環境是明確的前提，不是還沒補的缺口。這三項不成立時的行為刻意不處理：
+#   - Windows + Git Bash。cmd.exe／PowerShell 不支援。
+#   - GNU sed。unfold() 靠它在置換端把 \n 展開成換行；BSD／macOS sed 會當成字面的 n。
+#     偵測本身用 cmp 逐 byte 比，不受影響，受影響的是失敗訊息的可讀性。
+#   - Python 3。python 指到 Python 2 的主機不支援 —— 底下的探針只驗「跑得動」，
+#     驗不出版本，而 generator 與內嵌驗證器都需要 3。
 #
 # 結束碼：每個案例都符合預期則為 0，只要有任一案例不符則為 1 — 可安心接進 CI。
 
@@ -50,6 +55,7 @@ done
 # 純文字比對都看不出來。挑第一個「真的跑得動」的直譯器 — Windows 上的 python3
 # 常常是 Microsoft Store 的空殼，會什麼都不印就結束，所以這裡看輸出而不是看存在。
 # generator 也是同一支直譯器跑的。
+# print("ok") 在 Python 2 也會印 ok，所以這裡驗不出版本；Python 2 的主機不處理（見表頭）。
 PY=""
 for candidate in python python3; do
   if [ "$("$candidate" -c 'print("ok")' 2>/dev/null)" = "ok" ]; then
@@ -81,6 +87,7 @@ regenerate() {
 
 # 把摘要那一行裡「字面上的」\n 換成真換行。整段摘要在檔案裡是兩千多字的一整行，
 # 不攤開的話 diff 只會說「這一行不一樣」，看不出差在哪一條。
+# 置換端的 \n 要 GNU sed 才會變成換行；BSD／macOS sed 不處理（見表頭）。
 unfold() {
   sed 's/\\n/\n/g' "$1"
 }
