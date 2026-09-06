@@ -106,3 +106,45 @@ the most expensive finding there is」—— 它描述的正是這個失效，�
 **因此這一格要成立需要三樣東西同時在場**：`PASS` 的排除子句、`TASK_UPDATE_REQUIRED` 的第二個
 分支、以及 reviewer 流程裡真的去讀 `Goal` 的那一步。少任何一樣，剩下兩樣都是裝飾 —— 而裝飾比
 沒改更糟，因為它看起來已經修好了。
+
+---
+
+## 未解決：review 預算是 per-file 還是 per-task
+
+這一節記的是**還沒解決的矛盾**，不是某條規則的理由。
+
+`../SKILL.md` 對預算講了兩句不能同時成立的話：
+
+- 「the budget is **the highest pass number** allowed」—— 而 pass 編號依規定是「one past the
+  highest that appears in the pass log or in any finding's `Raised:` line」，也就是**整份
+  `REVIEW.md` 共用一個計數器**。
+- `Review budget` 那一行自己寫的是「review passes before **the task** is done」。
+
+按前者，一份有 T1–T8 的 spec 在 `Rigor: low` 之下是**八個任務總共 2 趟**，不是每個任務 2 趟。
+
+2026-09-05 實際撞到：T1 用掉 pass 1，T2 在 `low` 之下只剩 1 趟。當時的處理是把 `Rigor` 提到
+`medium` 買到 pass 2 與 3；後來要開 T3 時預算又已用盡，改用明確的 `Review budget` 覆寫。兩次
+都是繞過，不是解決。
+
+三個方向，取捨不同：
+
+- **改成 per-task**：`Review budget` 移進 `T<n>` 區段。解掉矛盾，代價是 pass 編號仍是全域的，
+  要多一條規則說明「某任務花了幾趟」怎麼從全域編號算出來。
+- **維持全域、把話講清楚**：`Review budget` 那一行改成「before **this spec** is done」，並明說
+  一份 spec 該只放少數幾個任務。改一行字，而且保住一個有益的副作用 —— 全域計數會逼人把 spec
+  切小，而 spec 太大正是 0.8.0 那輪 78 條 finding 的成因之一（規格中途從 3 個任務長到 8 個）。
+- **不改，只記在這裡**：現況能跑，繞法在 `Change history` 裡可見。
+
+---
+
+## 未解決：`Rigor` 同時控制兩件無關的事
+
+`Rigor` 一個字決定**預算**（2/3/4 趟），也決定**範圍與嚴重度**（「rare and loud」在 `low` 之外、
+測試設備的 severity 上限、測試要不要先看到紅才算數）。
+
+這兩者沒有必然關係，而把它們綁在同一個旋鈕上有實際後果：2026-09-05 為了給 T2 多兩趟 review
+而把 `Rigor` 從 `low` 提到 `medium`，**連帶改變了範圍判準**，而且理論上回溯影響了已經在 `low`
+之下判過的 T1（T1 已結案，所以沒有實害，但那是運氣不是設計）。
+
+要買預算的人不一定想要更嚴的範圍，反過來也一樣。拆成兩個欄位是明顯的解法；不拆的理由只有
+「一個字比兩個字好記」，而那個理由在上面那次繞過裡已經輸過一次。
