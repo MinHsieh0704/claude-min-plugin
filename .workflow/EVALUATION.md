@@ -166,3 +166,40 @@ the reviewer is the one that pays for itself.
 - The two design-notes inconsistencies above.
 - Extracting the shared test harness duplicated between
   `skills/commit/tests/test-commit-msg-hook.sh` and `hooks-handlers/tests/test-session-start.sh`.
+
+---
+
+## 7. Where this work lives, and what is blocked on what
+
+Facts only. The session that ran this trial reached conclusions about what to do next; they are
+deliberately **not** recorded here, so that a re-evaluation starts from the measurements rather
+than from somebody's reading of them.
+
+**Location.** Branch `worktree-wf-rc2-trial`, in the worktree
+`.claude/worktrees/wf-rc2-trial`, based on `master` at `d2250fc`. Seven commits, `2ca6a1c`
+through `1b52d19`. **Not pushed** - `git ls-remote --heads origin worktree-wf-rc2-trial` returns
+nothing, so these commits exist only in this machine's object store. The worktree is `locked`.
+
+Removing the worktree does not by itself lose the commits; deleting the branch without merging it
+does. `/claude-min-plugin:merge-worktree` fast-forwards into the main checkout's branch before it
+removes either.
+
+**The harness extraction has not been started.** `skills/commit/tests/test-commit-msg-hook.sh` and
+`hooks-handlers/tests/test-session-start.sh` carry near-identical copies of `run_case`, the
+pass/fail counters, the `mktemp -d` plus EXIT trap, and the results footer. What stopped it was not
+the work itself:
+
+- T2 spent the review budget. `Rigor: medium` allows 3 passes and pass 3 was written.
+- `../skills/workflow/SKILL.md` defines the budget as "the highest pass number allowed", and pass
+  numbers are allocated across the whole of `REVIEW.md` rather than per task. A new `T3` therefore
+  has no pass available under the spec as it stands.
+- The same file states that an explicit `Review budget` line beats the level. That line has never
+  been used in this repository.
+
+This is one instance of the first unresolved problem recorded in
+`skills/workflow/references/design-notes.md`, met while trying to do ordinary work rather than
+while reading the spec.
+
+**Not carried into this document**: how the two `DEFERRED` findings differ in what closing them
+would cost - each one's own `Decision` line in `REVIEW.md` already says it, and a second copy here
+would be one more thing to keep in step.
