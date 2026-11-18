@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The repository root **is** the plugin (`claude-min-plugin`) and also its own marketplace (`min-plugins`, via `"source": "./"`). There is no application code — every file here is plugin content.
 
-`.claude-plugin/` holds only the two manifests. Component directories (`skills/`, `agents/`, `hooks/`, `hooks-handlers/`) live at the repo root and must never be moved inside `.claude-plugin/`.
+`.claude-plugin/` holds only the two manifests. Component directories (`skills/`, `hooks/`, `hooks-handlers/`) live at the repo root and must never be moved inside `.claude-plugin/`.
 
 ## Single source of truth
 
@@ -14,9 +14,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `hooks-handlers/session-start.sh` no longer holds a hand-written summary. Each numbered heading in `SKILL.md` carries its one-line tagline in an adjacent `<!-- summary: ... -->` comment, and the handler's `additionalContext` line is produced from those by `hooks-handlers/generate-session-start.py`. **Never hand-edit that line** — edit the comment beside the heading and re-run the generator. `hooks-handlers/tests/test-session-start.sh` regenerates and compares byte for byte, so a handler that is not the generator's current output turns it red. **What no check can reach is a tagline that no longer describes its own section** — a condensation has nothing to be mechanically compared against, so that one stays editorial.
 
-Both agents in `agents/` reach the guidelines the other way — by *reference*, through `skills: coding-guidelines, workflow` in their frontmatter, which loads those files into the agent's context at startup with no tool call. The bare skill name is what resolves for a plugin's own skill; the namespaced `claude-min-plugin:coding-guidelines` form is not what that field takes. Keep it a reference and never a restatement: an agent that spelled the rules out again would be one more derived copy on a pile that already holds the `session-start.sh` summary and the `README.md` language table. The `README.md` Agents table is deliberately one line per agent — what it is for, and where its definition lives — so a change to `agents/*.md` rarely touches it; keep it that short rather than letting it grow back into a copy that has to be edited in lockstep with nothing to detect its drift. The same applies to the `workflow` skill's `Rigor` table: `README.md` points at it and must never reproduce it. An agent may say which *kinds* of guideline apply to its job, but must never hard-code rule numbers or re-list the rules themselves.
-
-The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` covers the one class the line-based scan structurally cannot (an output statement split across lines). The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there either. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
+The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` covers the one class the line-based scan structurally cannot (an output statement split across lines). The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
 
 Both manifests carry a plugin `description`, and they must stay identical: `.claude-plugin/plugin.json` and the `plugins[0].description` in `.claude-plugin/marketplace.json`. Editing one and not the other is silent — nothing validates that they agree.
 
@@ -55,33 +53,6 @@ claude --plugin-dir .                      # load without installing
 `claude plugin validate .` sees `marketplace.json` first and validates only that. To validate the plugin manifest, skill frontmatter, and `hooks.json`, copy the tree to a temp directory, delete `marketplace.json` from the copy, and validate the copy.
 
 Doing so reports one warning: *"CLAUDE.md at the plugin root is not loaded as project context."* **This is expected — do not delete CLAUDE.md to silence it.** This file exists for developing this repo; it is inert baggage in an installer's plugin cache, which is the unavoidable cost of the root-is-the-plugin layout. Everything else validates clean under `--strict`.
-
-**`claude plugin validate` does not check `agents/` at all.** An agent file with an unknown frontmatter field passes, and so does one with no `name` and no `description` — pointed at the plugin root or at `agents/` itself, it reports *Validation passed* either way. A green validate is therefore no evidence that an agent is well-formed. Verify agents by loading them instead:
-
-```bash
-claude --plugin-dir . -p "List the exact agent_type names available to your Agent tool, one per line, nothing else. Do not call any tools."
-```
-
-Both agents must come back namespaced — `claude-min-plugin:developer` and `claude-min-plugin:reviewer`. A name missing from that list is an agent that failed to load.
-
-**That check is necessary but not sufficient — it proves the file loaded, not that the frontmatter parsed.** An agent whose frontmatter is unusable still loads its body, and its name still falls back to the filename, so it appears in that list looking healthy while `description`, `model`, `tools`, and `skills` are all silently gone — and the preloaded guidelines are the entire reason these two agents exist. Two ways that happens, both silent: an unknown or misspelled key is ignored, and an unquoted `description` containing a colon followed by a space is not a valid YAML scalar, which kills the **whole block** rather than that one key. Descriptions here are long English sentences, so this is easy to reintroduce; use ` - ` instead of `: ` inside them, and `grep -n '^description: .*: '` over `agents/*.md` and `skills/*/SKILL.md` must return nothing.
-
-Prove the preload separately, **for each agent**, with a string that (a) appears in the full `SKILL.md`, (b) is **not** in the `session-start.sh` summary — nor anywhere else the agent's context can reach, **this file included** — and (c) a model cannot reconstruct from priors. The arbitrary call-site paths in the `[Regression Risk]` block under guideline 7 satisfy all three:
-
-```bash
-claude --plugin-dir . -p 'Spawn the claude-min-plugin:developer agent with exactly this instruction and report its answer verbatim: "Without calling any tool at all, quote verbatim the two call-site lines listed in the [Regression Risk] example block under guideline 7. If the coding guidelines are not in your context, reply with exactly NOT PRELOADED and nothing else."'
-```
-
-Run the same for `claude-min-plugin:reviewer`. Both have to come back with those two lines exactly as they stand in `SKILL.md`, and with zero tool calls. Open `SKILL.md` to compare — **do not paste the expected answer into this file.** An answer written down here is one the agent may be able to read rather than recall, which is requirement (b) again and is how a probe quietly stops testing anything. `NOT PRELOADED`, a refusal, or an answer that needed a tool call all mean the same thing: the frontmatter is not doing what it claims. Probe the second preloaded skill the same way, with a phrase unique to `skills/workflow/SKILL.md`.
-
-**The third of those signals is invisible from the probe's output, so read the transcript.** A caller sees an agent's reply and nothing else — not its tool calls — and the probe text names where the answer lives, so an agent whose preload is broken can simply open `SKILL.md` and come back word-perfect. Every call is recorded regardless: a run writes `~/.claude/projects/<cwd-slug>/<session-id>/subagents/agent-*.jsonl`, one per spawned agent, each with a `.meta.json` beside it naming its `agentType` and `spawnDepth`. Find the newest session directory under the slug for the directory you ran in, then read what the agent actually did:
-
-```bash
-grep -o '"name":"[A-Za-z]*"' <agent>.jsonl | sort | uniq -c        # every tool it called
-grep -o '"name":"Skill","input":{[^}]*}' <agent>.jsonl             # and with which arguments
-```
-
-A preload probe passes only when the first command prints nothing. These files are also how any other claim an agent makes about itself gets checked — that it ran `/code-review`, at which level, that it wrote only the files it was allowed to. **The report is a claim; the transcript is the record.**
 
 Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass at 17/17 before it is considered done.
 

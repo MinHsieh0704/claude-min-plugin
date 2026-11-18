@@ -1,9 +1,8 @@
 # claude-min-plugin
 
-一個包含五個 skill、兩個 agent 與三個 hook 的 Claude Code 外掛：一套用來減少 LLM 常見
-錯誤的 coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 worktree 合併輔助
-工具、一個中英文語言分界的稽核工具，以及一套「規格 → 實作 → 獨立審查」的開發流程與
-兩個照著那套準則做事的 agent。
+一個包含四個 skill 與三個 hook 的 Claude Code 外掛：一套用來減少 LLM 常見錯誤的
+coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 worktree 合併輔助
+工具，以及一個中英文語言分界的稽核工具。
 
 ## 安裝
 
@@ -26,85 +25,6 @@ claude --plugin-dir /path/to/this/repo
 | `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
-| `/claude-min-plugin:workflow` | 維護三份把任務從規格帶到驗收的文件，全部放在 `.workflow/`：`TASKS.md`（唯一正式規格，只有協調者能改）、`TASK-CHANGES.md`（待決的需求變更提案，任何角色都能提、只有協調者能決）、`REVIEW.md`（findings 的 ledger，加上每一趟審查的 `PASS` / `FAIL` / `TASK_UPDATE_REQUIRED` 判定）。子指令：`init`、`change`、`decide`、`review`、`trim`。三份文件**只追加，任何子指令都不刪除、不重編號**，每一筆都有永不重用的編號（`TCR-nnn` / `F-nnn`），所以你只要報號碼就能裁決；findings 帶 `OPEN` / `FIXED` / `WONTFIX` / `DEFERRED` 狀態，「這條不處理」與「這條之後再說」都留得下來，下一趟審查不會再問你一次。每個子指令實際做什麼、以及 `TASKS.md` 那個決定任務何時結束的 `Rigor`，見 `skills/workflow/SKILL.md`。 |
-
-## 開發流程
-
-三個角色，兩種載體。**Plan 在你自己的主 session**（plan mode 規劃 → 核准 →
-`/claude-min-plugin:workflow init` 輸出成 `.workflow/TASKS.md`），**Developer 與 Reviewer 是
-subagent**。它們交換的是**產出物**而不是對話 —— 所以實作端與審查端可以在各自獨立的 session
-裡跑，讀同一份規格、而誰都沒看過對方的推理。
-
-```
-plan mode → TASKS.md → @developer → 程式碼 → @reviewer → REVIEW.md
-                ↑                                              │
-                └──── decide ←── TASK-CHANGES.md ←─────────────┘
-```
-
-`REVIEW.md` 裡的每一條 finding 也走 `decide`：你報一個 `F-nnn`，判它 `FIXED` /
-`WONTFIX` / `DEFERRED`。判過的會留在 ledger 裡，下一趟審查不會再拿同一件事問你一次。
-
-**規格只有一個寫入者。** 能改規格的實作者可以把規格降到自己過關為止 —— 規格要 A，A 很難，
-規格變成 B，B 做出來了，B 通過審查；沒有人說謊，diff 上也留不下任何痕跡。所以 developer 與
-reviewer 都不能碰 `TASKS.md`，發現缺口一律走 `TASK-CHANGES.md` 提案，由你裁決。
-
-**不建議並行跑這兩個 agent。** `TCR-nnn` 與 `F-nnn` 都是「掃出檔案內目前最大值再加一」配發的，
-兩個 session 同時提案就會各自算出同一個號碼、各自寫進去，之後 `decide` 講不清自己裁決的是哪一
-筆，而編號永不重用的保證也就沒了。這套流程要的是**產出物**而不是對話 —— 那讓實作端與審查端能在
-各自獨立的 session 裡跑，但它們是**輪流**跑，不是同時。
-
-**任務會結束，是規格說的，而你只要回答一個字。** `init` 會問一次嚴謹度 `Rigor`。之後什麼時候
-算審完、範圍外的 finding 怎麼判、`DIMINISHING RETURNS` 何時出現，全部由那一個字推導出來 ——
-各級的實際內容見 `skills/workflow/SKILL.md`。
-
-## Agents
-
-安裝後以命名空間出現在 `@` 選單：`@claude-min-plugin:developer`、`@claude-min-plugin:reviewer`。
-兩者都在 frontmatter 以 `skills: coding-guidelines, workflow` 於啟動時把**完整**準則載入自己的
-context，所以它們是真的照那套準則做事，而不是只拿到 session 注入的那份摘要。
-
-| Agent | 定位 |
-|---|---|
-| `claude-min-plugin:developer` | 實作端。把任務翻成可驗證的成功條件、做最小改動、真的跑過驗證才回報；不 commit、不動你的 index。完整定義見 `agents/developer.md`。 |
-| `claude-min-plugin:reviewer` | 審查端。依序審需求、正確性、測試有效性、紀律，並必跑一次 `/code-review medium`；只寫 `.workflow/` 的兩份 ledger。完整定義見 `agents/reviewer.md`。 |
-
-### 幾個刻意的取捨
-
-**`/code-review` 是必要步驟，不是選項。** reviewer 一定會另外跑一次內建的 `code-review`，
-而 `REVIEW.md` 的每一條 finding 都帶著 `Source:` 欄位，你才分得出哪些是哪邊產出的。
-但只准跑純審查：`--fix` 會改動受審的樹，`--comment` / `--post` 會用別人的帳號發佈，
-`ultra` 是計費的雲端審查，這幾個一律禁止。跑不了的時候要寫明跑不了與原因 ——
-一個缺席的審查被讀成「沒發現問題」，是這一步唯一的失敗方式。
-
-**等級固定 `medium`，而且每次都明講。** 不指定等級的呼叫會沿用你上次輸入的那一個，等於讓
-上面那條 `ultra` 禁令建立在 agent 控制不了的預設值上。選 `medium` 的取捨是：這一趟是補充而
-不是主體，它給的是較少但高信心的發現，而 reviewer 每引用一條都得自己再確認一次。另外
-`code-review` 自己解析目標，未必等於 reviewer 審的那個範圍（沒設 upstream 的分支會退到整段
-branch range），所以它必須在那一段寫明實際涵蓋了什麼、兩段是不是同一份 diff。
-
-**developer 不會自己 commit，也不會動你的 index。** 做完就停，改動原封不動留在工作目錄給你看
-—— 不 stage、不 stash、不 checkout/reset，因為那些會移走或藏起你還沒看過的東西，而樹裡的
-改動未必全是它剛做的。由你決定要不要用 `/claude-min-plugin:commit` 記錄下來。
-
-**reviewer 的寫入是白名單，而且它是約束不是保證。** 它有 Edit 與 Write —— 要寫得出
-`.workflow/REVIEW.md` 與 `.workflow/TASK-CHANGES.md` 就非有不可 —— 所以「不碰受審的東西」
-**沒有任何工具層機制在擋**，靠的是 agent 內文的明文白名單。別把它當沙箱。
-
-**`TASK_UPDATE_REQUIRED` 不是比較軟的 `FAIL`。** `FAIL` 把工作退回實作者（規格沒問題、
-程式有問題）；`TASK_UPDATE_REQUIRED` 把問題退回規格擁有者 —— 規格沒說這裡該怎樣所以判不了，
-或者規格說了、而照著做仍然達不到 `Goal`。規格沉默時回 `FAIL`，是在要求別人照一條不存在的需求
-改程式碼；規格瞄錯目標時回 `PASS`，是在最後一個還有人能出聲的時機把任務記成完成。第二種要成立
-得付出什麼舉證，由 `skills/workflow/SKILL.md` 訂，這裡不複述。
-
-**兩者不互相串接。** developer 做完不會自動送審，reviewer 判 `FAIL` 也不會自動退回重做 ——
-什麼時候叫哪一個由你決定，一個小改動不必付一次完整審查的成本。代價是需求不會自己傳過去：
-叫 reviewer 的時候把任務編號或「這個改動本來要做到什麼」一併給它，那是它的第一順位檢查。
-
-**`model` 兩者都是 `inherit`**，跟隨你主對話的模型，換模型時不必改檔。
-
-> 注意：`claude plugin validate` 完全不檢查 `agents/` — 連缺 `name`、`description` 的
-> agent 檔案都會回報 *Validation passed*。要確認 agent 真的載入得了，只能實際載入：
-> `claude --plugin-dir . -p "List the exact agent_type names available to your Agent tool, one per line, nothing else. Do not call any tools."`
 
 ## 語言分界
 
