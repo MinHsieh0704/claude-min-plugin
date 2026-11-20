@@ -62,14 +62,16 @@ def entries(skill_path):
     # SKILL.md 在 working tree 上是 CRLF（.gitattributes 只釘 *.sh），所以用 splitlines。
     lines = skill_path.read_bytes().decode("utf-8").splitlines()
     found = []
-    numbered = 0
+    has_numbered = False
     for i, line in enumerate(lines):
         heading = HEADING.match(line)
-        if not heading or heading.group(2) in NO_SUMMARY:
+        if not heading:
             continue
-        label = "%s. %s" % heading.groups() if heading.group(1) else heading.group(2)
-        if heading.group(1):
-            numbered += 1
+        number, title = heading.groups()
+        if title in NO_SUMMARY:
+            continue
+        label = "%s. %s" % (number, title) if number else title
+        has_numbered = has_numbered or bool(number)
         # 只認「正下一行」：位置固定，漏寫或放錯地方都會在這裡大聲停下來，
         # 而不是安靜地少產生一個條目。
         summary = SUMMARY.match(lines[i + 1]) if i + 1 < len(lines) else None
@@ -82,7 +84,7 @@ def entries(skill_path):
             fail('empty tagline in the summary comment after heading "%s" in %s' % (label, skill_path))
         found.append("%s - %s" % (label, summary.group(1)))
     # 只看編號標題：只剩一條 Interaction Mode 的摘要一樣是壞掉的來源。
-    if not numbered:
+    if not has_numbered:
         fail("no numbered headings found in %s" % skill_path)
     return found
 

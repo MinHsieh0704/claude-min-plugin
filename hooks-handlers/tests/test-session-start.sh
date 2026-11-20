@@ -198,16 +198,20 @@ mutate_skill_rename() {
   awk '!hit && /^## [0-9]+\. / { sub(/\. .*/, ". Drift Probe Renamed"); hit = 1 } { print }' "$1" > "$2"
 }
 
+# 複製來源，再在檔尾附加第三個參數（printf 格式字串，所以 \n 會變成換行）。
+append_section() {
+  cp "$1" "$2"
+  printf "$3" >> "$2"
+}
+
 # 新增一節「連同它的標語」—— 也就是有人加了一條準則卻忘了重跑 generator。
 mutate_skill_add() {
-  cp "$1" "$2"
-  printf '\n## 99. Drift Probe Added\n<!-- summary: a guideline the handler has not been regenerated for. -->\n' >> "$2"
+  append_section "$1" "$2" '\n## 99. Drift Probe Added\n<!-- summary: a guideline the handler has not been regenerated for. -->\n'
 }
 
 # 新增一節但「沒寫標語」。這不是走鐘而是來源本身不完整，該由 generator 大聲擋下。
 mutate_skill_add_orphan() {
-  cp "$1" "$2"
-  printf '\n## 98. Drift Probe Orphan\n' >> "$2"
+  append_section "$1" "$2" '\n## 98. Drift Probe Orphan\n'
 }
 
 # 標語註解在，但 marker 後面是空的。regex 收得下（"summary:" 之後兩個空格就會匹配到
@@ -217,20 +221,14 @@ mutate_skill_blank_tagline() {
   replace_first_numbered_tagline "$1" "$2" "<!-- summary:  -->"
 }
 
-# 沒編號的標題：帶標語就進摘要；不帶（又不在 NO_SUMMARY 裡）或空標語都要擋。
+# 沒編號的標題：帶標語就進摘要；不帶（又不在 NO_SUMMARY 裡）要擋。
+# 空標語走的是跟編號標題同一條檢查，由上面的 blank-tagline 案例涵蓋。
 mutate_skill_add_unnumbered() {
-  cp "$1" "$2"
-  printf '\n## Drift Probe Unnumbered\n<!-- summary: an unnumbered section the handler has not been regenerated for. -->\n' >> "$2"
+  append_section "$1" "$2" '\n## Drift Probe Unnumbered\n<!-- summary: an unnumbered section the handler has not been regenerated for. -->\n'
 }
 
 mutate_skill_add_unnumbered_bare() {
-  cp "$1" "$2"
-  printf '\n## Drift Probe Unnumbered Bare\n\nBody text with no summary comment.\n' >> "$2"
-}
-
-mutate_skill_add_unnumbered_blank() {
-  cp "$1" "$2"
-  printf '\n## Drift Probe Unnumbered Blank\n<!-- summary:  -->\n' >> "$2"
+  append_section "$1" "$2" '\n## Drift Probe Unnumbered Bare\n\nBody text with no summary comment.\n'
 }
 
 # 標題與它正下一行的標語一起刪掉 —— generator 要求兩者相鄰，只刪一行會變成另一種錯。
@@ -340,9 +338,6 @@ mutate_skill_add_unnumbered_bare "$SKILL" "$WORKDIR/unnumbered-bare.md"
 run_case "an unnumbered heading with no tagline -> the generator refuses" 1 "no summary comment" \
   check_drift "$WORKDIR/unnumbered-bare.md" "$HANDLER"
 
-mutate_skill_add_unnumbered_blank "$SKILL" "$WORKDIR/unnumbered-blank.md"
-run_case "an unnumbered heading with an empty tagline -> the generator refuses" 1 "empty tagline" \
-  check_drift "$WORKDIR/unnumbered-blank.md" "$HANDLER"
 
 mutate_skill_remove_all "$SKILL" "$WORKDIR/emptied.md"
 run_case "every numbered heading gone -> reported, not a silent match" 1 "no numbered headings" \
