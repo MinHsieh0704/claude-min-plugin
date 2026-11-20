@@ -2,8 +2,9 @@
 #
 # SessionStart handler — 注入精簡版的 coding guidelines。
 #
-# 底下 additionalContext 那一行是「產生」出來的，不要手改：每個編號標題與它的單行
-# 標語都住在 skills/coding-guidelines/SKILL.md（標語是標題正下一行的 HTML 註解）。
+# 底下 additionalContext 那一行是「產生」出來的，不要手改：每個 ## 標題（編號與沒編號
+# 的都算，例如 Interaction Mode）與它的單行標語都住在 skills/coding-guidelines/SKILL.md
+# （標語是標題正下一行的 HTML 註解）。
 # 改完那邊，跑這個指令把這一行重新產生出來：
 #
 #     python hooks-handlers/generate-session-start.py

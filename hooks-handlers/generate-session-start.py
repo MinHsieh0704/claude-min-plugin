@@ -14,10 +14,9 @@ Microsoft Store 的空殼。
 的編號標題，標語取自標題「正下一行」的 <!-- summary: ... --> 註解。改了哪一節就改那一節
 的註解，然後重跑這支腳本 —— 兩份文字之間沒有東西可以走鐘，因為只剩一份。
 
-沒編號的標題（例如 Interaction Mode）只有在正下一行帶 summary 註解時才收進摘要，
-照文件順序、不帶編號；沒帶註解的（例如結尾的 When These Guidelines Are Working）
-刻意不進摘要。所以「漏寫標語就大聲停下」只對編號標題成立 —— 沒編號的標題漏寫註解，
-在這裡與「本來就不打算進摘要」分不出來。
+沒編號的標題（例如 Interaction Mode）一樣收進摘要，照文件順序、不帶編號。每個 ## 標題
+都必須帶標語，只有列在 NO_SUMMARY 裡的例外 —— 例外要明列，而不是「沒帶註解就當作不打算
+進摘要」：那樣的話，有人刪掉 Interaction Mode 的標語，它就會安靜地從每個 session 消失。
 
 註解而不是可見文字：這樣 SKILL.md 讀起來跟以前一模一樣，代價是編輯某一節的人不會
 一眼看到它。標語是「整節的濃縮」，本來就不屬於渲染出來的內容。
@@ -34,8 +33,9 @@ import re
 import sys
 from pathlib import Path
 
-HEADING = re.compile(r"^## (\d+)\. (.+)$")
-UNNUMBERED = re.compile(r"^## (.+)$")
+HEADING = re.compile(r"^## (?:(\d+)\. )?(.+)$")
+# 刻意不進摘要的 ## 標題。新增一個沒編號的標題時，要嘛給它標語，要嘛把它加進這裡。
+NO_SUMMARY = {"When These Guidelines Are Working"}
 SUMMARY = re.compile(r"^<!-- summary: (.*) -->$")
 CONTEXT = re.compile(r'^    "additionalContext": ')
 
@@ -57,38 +57,30 @@ def fail(message):
 
 
 def entries(skill_path):
-    """SKILL.md 的每個編號標題配上它的標語，組成 "<n>. <title> - <tagline>"；
-    帶標語的沒編號標題組成 "<title> - <tagline>"。"""
+    """SKILL.md 的每個 ## 標題（NO_SUMMARY 除外）配上它的標語：編號標題組成
+    "<n>. <title> - <tagline>"，沒編號的組成 "<title> - <tagline>"。"""
     # SKILL.md 在 working tree 上是 CRLF（.gitattributes 只釘 *.sh），所以用 splitlines。
     lines = skill_path.read_bytes().decode("utf-8").splitlines()
     found = []
     numbered = 0
     for i, line in enumerate(lines):
         heading = HEADING.match(line)
-        if not heading:
-            unnumbered = UNNUMBERED.match(line)
-            summary = SUMMARY.match(lines[i + 1]) if unnumbered and i + 1 < len(lines) else None
-            if not summary:
-                continue
-            if not summary.group(1).strip():
-                fail('empty tagline in the summary comment after heading "%s" in %s'
-                     % (unnumbered.group(1), skill_path))
-            found.append("%s - %s" % (unnumbered.group(1), summary.group(1)))
+        if not heading or heading.group(2) in NO_SUMMARY:
             continue
-        numbered += 1
+        label = "%s. %s" % heading.groups() if heading.group(1) else heading.group(2)
+        if heading.group(1):
+            numbered += 1
         # 只認「正下一行」：位置固定，漏寫或放錯地方都會在這裡大聲停下來，
         # 而不是安靜地少產生一個條目。
         summary = SUMMARY.match(lines[i + 1]) if i + 1 < len(lines) else None
         if not summary:
-            fail('no summary comment on the line after heading "%s. %s" in %s'
-                 % (heading.group(1), heading.group(2), skill_path))
+            fail('no summary comment on the line after heading "%s" in %s' % (label, skill_path))
         # marker 後面兩個空格的 "<!-- summary:  -->" 也匹配得過，group(1) 是空的。
         # 擋在這裡，否則那一條準則會變成只剩編號、標題與一個懸空的破折號進到每個
         # session，而且下游沒有任何東西看得見。
         if not summary.group(1).strip():
-            fail('empty tagline in the summary comment after heading "%s. %s" in %s'
-                 % (heading.group(1), heading.group(2), skill_path))
-        found.append("%s. %s - %s" % (heading.group(1), heading.group(2), summary.group(1)))
+            fail('empty tagline in the summary comment after heading "%s" in %s' % (label, skill_path))
+        found.append("%s - %s" % (label, summary.group(1)))
     # 只看編號標題：只剩一條 Interaction Mode 的摘要一樣是壞掉的來源。
     if not numbered:
         fail("no numbered headings found in %s" % skill_path)

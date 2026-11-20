@@ -19,7 +19,7 @@
 #
 # 全部突變都作用在暫存目錄裡的複本上，repo 的 working tree 不會被動到 ——
 # generator 會就地改寫，所以每次都改在複本上。
-# 突變本身刻意不綁死任何一段現有文字（都對「第一個編號標題／標語」下手），
+# 突變本身刻意不綁死任何一段現有文字（都對「第一個編號標題」或它正下一行的標語下手），
 # 這樣 SKILL.md 日後正常改寫時，這些負向案例不會誤報。
 #
 # 用法：
@@ -184,6 +184,16 @@ check_lone_argument_refused() {
 
 # --- 突變（只寫進 WORKDIR）---
 
+# 把「第一個編號標題」正下一行換成第三個參數。對準編號標題而不是檔案裡第一個標語：
+# 第一個標語屬於沒編號的 Interaction Mode，打在那裡的話，編號標題那條路徑就沒人測了。
+# 用 ENVIRON 傳而不是 -v：-v 會先把值裡的跳脫序列解掉。
+replace_first_numbered_tagline() {
+  REPLACEMENT="$3" awk \
+    'next_is { print ENVIRON["REPLACEMENT"]; next_is = 0; next }
+     !hit && /^## [0-9]+\. / { hit = 1; next_is = 1 } { print }' \
+    "$1" > "$2"
+}
+
 mutate_skill_rename() {
   awk '!hit && /^## [0-9]+\. / { sub(/\. .*/, ". Drift Probe Renamed"); hit = 1 } { print }' "$1" > "$2"
 }
@@ -203,13 +213,11 @@ mutate_skill_add_orphan() {
 # 標語註解在，但 marker 後面是空的。regex 收得下（"summary:" 之後兩個空格就會匹配到
 # 空字串），而那會讓某一條準則只剩編號、標題與一個懸空的破折號進到每個 session。
 # 一樣是來源本身不完整，而且是安靜的，該由 generator 大聲擋下。
-# 對準「第一個編號標題」底下那一行：第一個標語可能屬於沒編號的標題（見下一個突變）。
 mutate_skill_blank_tagline() {
-  awk 'next_is { print "<!-- summary:  -->"; next_is = 0; next }
-       !hit && /^## [0-9]+\. / { hit = 1; next_is = 1 } { print }' "$1" > "$2"
+  replace_first_numbered_tagline "$1" "$2" "<!-- summary:  -->"
 }
 
-# 沒編號的標題：帶標語就進摘要，不帶就不進，空標語一樣要擋。
+# 沒編號的標題：帶標語就進摘要；不帶（又不在 NO_SUMMARY 裡）或空標語都要擋。
 mutate_skill_add_unnumbered() {
   cp "$1" "$2"
   printf '\n## Drift Probe Unnumbered\n<!-- summary: an unnumbered section the handler has not been regenerated for. -->\n' >> "$2"
@@ -236,15 +244,13 @@ mutate_skill_remove_all() {
 
 # 只改標語、標題原封不動 —— T1 那半邊（只比對標題）完全看不見的那個案例。
 mutate_skill_tagline() {
-  awk '!hit && /^<!-- summary: / { print "<!-- summary: Drift Probe Tagline -->"; hit = 1; next } { print }' "$1" > "$2"
+  replace_first_numbered_tagline "$1" "$2" "<!-- summary: Drift Probe Tagline -->"
 }
 
-# 標語裡塞進 " 與 \ 。用 ENVIRON 傳而不是 -v：-v 會先把值裡的跳脫序列解掉。
+# 標語裡塞進 " 與 \ 。
 ESCAPE_PROBE='a "quoted" word and a \backslash probe.'
 mutate_skill_escapes() {
-  ESCAPE_PROBE="$ESCAPE_PROBE" awk \
-    '!hit && /^<!-- summary: / { print "<!-- summary: " ENVIRON["ESCAPE_PROBE"] " -->"; hit = 1; next } { print }' \
-    "$1" > "$2"
+  replace_first_numbered_tagline "$1" "$2" "<!-- summary: $ESCAPE_PROBE -->"
 }
 
 # 砍掉文件最外層的右大括號 — 產生語法上真的壞掉的 JSON。
@@ -331,7 +337,7 @@ run_case "an unnumbered heading with a tagline added -> drift reported" 1 "Drift
   check_drift "$WORKDIR/unnumbered.md" "$HANDLER"
 
 mutate_skill_add_unnumbered_bare "$SKILL" "$WORKDIR/unnumbered-bare.md"
-run_case "an unnumbered heading with no tagline -> left out, no drift" 0 "" \
+run_case "an unnumbered heading with no tagline -> the generator refuses" 1 "no summary comment" \
   check_drift "$WORKDIR/unnumbered-bare.md" "$HANDLER"
 
 mutate_skill_add_unnumbered_blank "$SKILL" "$WORKDIR/unnumbered-blank.md"
