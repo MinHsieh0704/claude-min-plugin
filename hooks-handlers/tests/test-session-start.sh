@@ -203,8 +203,26 @@ mutate_skill_add_orphan() {
 # 標語註解在，但 marker 後面是空的。regex 收得下（"summary:" 之後兩個空格就會匹配到
 # 空字串），而那會讓某一條準則只剩編號、標題與一個懸空的破折號進到每個 session。
 # 一樣是來源本身不完整，而且是安靜的，該由 generator 大聲擋下。
+# 對準「第一個編號標題」底下那一行：第一個標語可能屬於沒編號的標題（見下一個突變）。
 mutate_skill_blank_tagline() {
-  awk '!hit && /^<!-- summary: / { print "<!-- summary:  -->"; hit = 1; next } { print }' "$1" > "$2"
+  awk 'next_is { print "<!-- summary:  -->"; next_is = 0; next }
+       !hit && /^## [0-9]+\. / { hit = 1; next_is = 1 } { print }' "$1" > "$2"
+}
+
+# 沒編號的標題：帶標語就進摘要，不帶就不進，空標語一樣要擋。
+mutate_skill_add_unnumbered() {
+  cp "$1" "$2"
+  printf '\n## Drift Probe Unnumbered\n<!-- summary: an unnumbered section the handler has not been regenerated for. -->\n' >> "$2"
+}
+
+mutate_skill_add_unnumbered_bare() {
+  cp "$1" "$2"
+  printf '\n## Drift Probe Unnumbered Bare\n\nBody text with no summary comment.\n' >> "$2"
+}
+
+mutate_skill_add_unnumbered_blank() {
+  cp "$1" "$2"
+  printf '\n## Drift Probe Unnumbered Blank\n<!-- summary:  -->\n' >> "$2"
 }
 
 # 標題與它正下一行的標語一起刪掉 —— generator 要求兩者相鄰，只刪一行會變成另一種錯。
@@ -307,6 +325,18 @@ run_case "a numbered heading with no tagline -> the generator refuses" 1 "no sum
 mutate_skill_blank_tagline "$SKILL" "$WORKDIR/blank-tagline.md"
 run_case "a tagline that is empty after the marker -> the generator refuses" 1 "empty tagline" \
   check_drift "$WORKDIR/blank-tagline.md" "$HANDLER"
+
+mutate_skill_add_unnumbered "$SKILL" "$WORKDIR/unnumbered.md"
+run_case "an unnumbered heading with a tagline added -> drift reported" 1 "Drift Probe Unnumbered" \
+  check_drift "$WORKDIR/unnumbered.md" "$HANDLER"
+
+mutate_skill_add_unnumbered_bare "$SKILL" "$WORKDIR/unnumbered-bare.md"
+run_case "an unnumbered heading with no tagline -> left out, no drift" 0 "" \
+  check_drift "$WORKDIR/unnumbered-bare.md" "$HANDLER"
+
+mutate_skill_add_unnumbered_blank "$SKILL" "$WORKDIR/unnumbered-blank.md"
+run_case "an unnumbered heading with an empty tagline -> the generator refuses" 1 "empty tagline" \
+  check_drift "$WORKDIR/unnumbered-blank.md" "$HANDLER"
 
 mutate_skill_remove_all "$SKILL" "$WORKDIR/emptied.md"
 run_case "every numbered heading gone -> reported, not a silent match" 1 "no numbered headings" \
