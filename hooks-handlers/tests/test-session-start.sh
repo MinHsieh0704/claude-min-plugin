@@ -185,7 +185,7 @@ check_lone_argument_refused() {
 # --- 突變（只寫進 WORKDIR）---
 
 # 把「第一個編號標題」正下一行換成第三個參數。對準編號標題而不是檔案裡第一個標語：
-# 第一個標語屬於沒編號的 Interaction Mode，打在那裡的話，編號標題那條路徑就沒人測了。
+# 第一個標語可能屬於沒編號的標題，打在那裡的話，編號標題那條路徑就沒人測了。
 # 用 ENVIRON 傳而不是 -v：-v 會先把值裡的跳脫序列解掉。
 replace_first_numbered_tagline() {
   REPLACEMENT="$3" awk \
@@ -198,10 +198,11 @@ mutate_skill_rename() {
   awk '!hit && /^## [0-9]+\. / { sub(/\. .*/, ". Drift Probe Renamed"); hit = 1 } { print }' "$1" > "$2"
 }
 
-# 複製來源，再在檔尾附加第三個參數（printf 格式字串，所以 \n 會變成換行）。
+# 複製來源，再在檔尾附加第三個參數。%b 展開 \n 之類的跳脫，但不把參數當格式字串，
+# 所以文字裡的 % 會原樣寫出去。
 append_section() {
   cp "$1" "$2"
-  printf "$3" >> "$2"
+  printf '%b' "$3" >> "$2"
 }
 
 # 新增一節「連同它的標語」—— 也就是有人加了一條準則卻忘了重跑 generator。
@@ -234,6 +235,17 @@ mutate_skill_add_unnumbered_bare() {
 # 標了 no-summary 的新標題：明說不進摘要，所以 handler 不必重產、不算走鐘。
 mutate_skill_add_opted_out() {
   append_section "$1" "$2" '\n## Drift Probe Opted Out\n<!-- no-summary -->\n\nBody text.\n'
+}
+
+# 編號標題也可以標 no-summary：刻意允許，標了就從摘要拿掉（所以算走鐘）。
+# 這裡把行為釘住，日後要改成拒絕時，這個案例會提醒那是行為改變。
+mutate_skill_numbered_opted_out() {
+  replace_first_numbered_tagline "$1" "$2" "<!-- no-summary -->"
+}
+
+# code fence 裡的 "## " 是範例，不是章節：沒標語也不該擋，也不該進摘要。
+mutate_skill_add_fenced_heading() {
+  append_section "$1" "$2" '\n```markdown\n## Drift Probe Fenced\n<!-- summary: an example inside a code fence. -->\n## Drift Probe Fenced Bare\n```\n'
 }
 
 # 標題與它正下一行的標語一起刪掉 —— generator 要求兩者相鄰，只刪一行會變成另一種錯。
@@ -347,6 +359,14 @@ mutate_skill_add_opted_out "$SKILL" "$WORKDIR/opted-out.md"
 run_case "a heading marked no-summary -> left out, no drift" 0 "" \
   check_drift "$WORKDIR/opted-out.md" "$HANDLER"
 
+# 第一個編號標題被拿掉，所以攤開後的 diff 必定少掉一行 "1. ..."。
+mutate_skill_numbered_opted_out "$SKILL" "$WORKDIR/numbered-opted-out.md"
+run_case "a numbered heading marked no-summary -> left out, drift reported" 1 "^< 1\. " \
+  check_drift "$WORKDIR/numbered-opted-out.md" "$HANDLER"
+
+mutate_skill_add_fenced_heading "$SKILL" "$WORKDIR/fenced.md"
+run_case "a heading inside a code fence -> ignored, no drift" 0 "" \
+  check_drift "$WORKDIR/fenced.md" "$HANDLER"
 
 mutate_skill_remove_all "$SKILL" "$WORKDIR/emptied.md"
 run_case "every numbered heading gone -> reported, not a silent match" 1 "no numbered headings" \

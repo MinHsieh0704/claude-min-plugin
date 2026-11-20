@@ -63,8 +63,13 @@ def entries(skill_path):
     lines = skill_path.read_bytes().decode("utf-8").splitlines()
     found = []
     has_numbered = False
+    # code fence 裡的 "## " 是範例文字，不是章節：不收、也不要求它帶標語。
+    in_fence = False
     for i, line in enumerate(lines):
-        heading = HEADING.match(line)
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        heading = None if in_fence else HEADING.match(line)
         if not heading:
             continue
         next_line = lines[i + 1] if i + 1 < len(lines) else ""
@@ -85,7 +90,7 @@ def entries(skill_path):
         if not summary.group(1).strip():
             fail('empty tagline in the summary comment after heading "%s" in %s' % (label, skill_path))
         found.append("%s - %s" % (label, summary.group(1)))
-    # 只看編號標題：只剩一條 Interaction Mode 的摘要一樣是壞掉的來源。
+    # 只看編號標題：只剩沒編號標題的摘要一樣是壞掉的來源。
     if not has_numbered:
         fail("no numbered headings found in %s" % skill_path)
     return found
