@@ -10,7 +10,7 @@
 #
 # 忘記重跑會被 hooks-handlers/tests/test-session-start.sh 擋下來。
 #
-# 完整全文刻意不進入每個 session 的 context（約 1.5k token）；Claude 會在
+# 完整全文刻意不進入每個 session 的 context（約 4k token）；Claude 會在
 # 需要時透過 /claude-min-plugin:coding-guidelines 自行讀取。
 #
 # 一律啟用：這支 handler 沒有 userConfig 開關。不想要這套準則的使用者請停用整個外掛。
