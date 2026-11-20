@@ -243,11 +243,6 @@ mutate_skill_numbered_opted_out() {
   replace_first_numbered_tagline "$1" "$2" "<!-- no-summary -->"
 }
 
-# code fence 裡的 "## " 是範例，不是章節：沒標語也不該擋，也不該進摘要。
-mutate_skill_add_fenced_heading() {
-  append_section "$1" "$2" '\n```markdown\n## Drift Probe Fenced\n<!-- summary: an example inside a code fence. -->\n## Drift Probe Fenced Bare\n```\n'
-}
-
 # 標題與它正下一行的標語一起刪掉 —— generator 要求兩者相鄰，只刪一行會變成另一種錯。
 mutate_skill_remove() {
   awk '!hit && /^## [0-9]+\. / { hit = 1; skip = 1; next } skip { skip = 0; next } { print }' "$1" > "$2"
@@ -363,10 +358,6 @@ run_case "a heading marked no-summary -> left out, no drift" 0 "" \
 mutate_skill_numbered_opted_out "$SKILL" "$WORKDIR/numbered-opted-out.md"
 run_case "a numbered heading marked no-summary -> left out, drift reported" 1 "^< 1\. " \
   check_drift "$WORKDIR/numbered-opted-out.md" "$HANDLER"
-
-mutate_skill_add_fenced_heading "$SKILL" "$WORKDIR/fenced.md"
-run_case "a heading inside a code fence -> ignored, no drift" 0 "" \
-  check_drift "$WORKDIR/fenced.md" "$HANDLER"
 
 mutate_skill_remove_all "$SKILL" "$WORKDIR/emptied.md"
 run_case "every numbered heading gone -> reported, not a silent match" 1 "no numbered headings" \

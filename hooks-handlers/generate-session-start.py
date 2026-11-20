@@ -63,13 +63,12 @@ def entries(skill_path):
     lines = skill_path.read_bytes().decode("utf-8").splitlines()
     found = []
     has_numbered = False
-    # code fence 裡的 "## " 是範例文字，不是章節：不收、也不要求它帶標語。
-    in_fence = False
+    # 刻意不辨認 code fence：fence 裡的 "## " 一樣被當成標題，沒帶標語就大聲停下。
+    # 追蹤 fence 的開關曾經試過，但 fence 一旦沒關好，後面每一節都會安靜地消失 ——
+    # 比「範例被誤認成標題而報錯」糟得多。真要在 SKILL.md 放這種範例，就給它標語或
+    # no-summary 標記。
     for i, line in enumerate(lines):
-        if line.startswith("```"):
-            in_fence = not in_fence
-            continue
-        heading = None if in_fence else HEADING.match(line)
+        heading = HEADING.match(line)
         if not heading:
             continue
         next_line = lines[i + 1] if i + 1 < len(lines) else ""
