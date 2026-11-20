@@ -4,7 +4,7 @@
 #
 # 底下 additionalContext 那一行是「產生」出來的，不要手改：每個 ## 標題與它的單行
 # 標語都住在 skills/coding-guidelines/SKILL.md（標語是標題正下一行的 HTML 註解；
-# 哪些標題例外，見 generator 的 NO_SUMMARY）。
+# 不進摘要的標題，正下一行改寫 <!-- no-summary -->）。
 # 改完那邊，跑這個指令把這一行重新產生出來：
 #
 #     python hooks-handlers/generate-session-start.py

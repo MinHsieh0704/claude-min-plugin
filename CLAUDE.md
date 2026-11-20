@@ -12,7 +12,7 @@ The repository root **is** the plugin (`claude-min-plugin`) and also its own mar
 
 `skills/coding-guidelines/SKILL.md` is the only copy of the coding guidelines. It serves two roles at once: the skill shipped to installers, and this repo's own guidelines, which reach each session through the `session-start.sh` summary plus `/claude-min-plugin:coding-guidelines` on demand. **Never create a second copy.**
 
-`hooks-handlers/session-start.sh` no longer holds a hand-written summary. Each numbered heading in `SKILL.md` carries its one-line tagline in an adjacent `<!-- summary: ... -->` comment (unnumbered headings included, except those listed in the generator's `NO_SUMMARY`), and the handler's `additionalContext` line is produced from those by `hooks-handlers/generate-session-start.py`. **Never hand-edit that line** — edit the comment beside the heading and re-run the generator. `hooks-handlers/tests/test-session-start.sh` regenerates and compares byte for byte, so a handler that is not the generator's current output turns it red. **What no check can reach is a tagline that no longer describes its own section** — a condensation has nothing to be mechanically compared against, so that one stays editorial.
+`hooks-handlers/session-start.sh` no longer holds a hand-written summary. Each numbered heading in `SKILL.md` carries its one-line tagline in an adjacent `<!-- summary: ... -->` comment (unnumbered headings included; a heading meant to stay out of the summary carries `<!-- no-summary -->` there instead), and the handler's `additionalContext` line is produced from those by `hooks-handlers/generate-session-start.py`. **Never hand-edit that line** — edit the comment beside the heading and re-run the generator. `hooks-handlers/tests/test-session-start.sh` regenerates and compares byte for byte, so a handler that is not the generator's current output turns it red. **What no check can reach is a tagline that no longer describes its own section** — a condensation has nothing to be mechanically compared against, so that one stays editorial.
 
 The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` covers the one class the line-based scan structurally cannot (an output statement split across lines). The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there. The convention governs this repo too, so run `/claude-min-plugin:language-check` after touching comments, output strings, or docs.
 
@@ -45,7 +45,7 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
-bash hooks-handlers/tests/test-session-start.sh   # expect 16/16 - the handler is the generator's output
+bash hooks-handlers/tests/test-session-start.sh   # expect 17/17 - the handler is the generator's output
 git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```

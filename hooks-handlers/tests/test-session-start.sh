@@ -221,7 +221,7 @@ mutate_skill_blank_tagline() {
   replace_first_numbered_tagline "$1" "$2" "<!-- summary:  -->"
 }
 
-# 沒編號的標題：帶標語就進摘要；不帶（又不在 NO_SUMMARY 裡）要擋。
+# 沒編號的標題：帶標語就進摘要；不帶（又沒標 no-summary）要擋。
 # 空標語走的是跟編號標題同一條檢查，由上面的 blank-tagline 案例涵蓋。
 mutate_skill_add_unnumbered() {
   append_section "$1" "$2" '\n## Drift Probe Unnumbered\n<!-- summary: an unnumbered section the handler has not been regenerated for. -->\n'
@@ -229,6 +229,11 @@ mutate_skill_add_unnumbered() {
 
 mutate_skill_add_unnumbered_bare() {
   append_section "$1" "$2" '\n## Drift Probe Unnumbered Bare\n\nBody text with no summary comment.\n'
+}
+
+# 標了 no-summary 的新標題：明說不進摘要，所以 handler 不必重產、不算走鐘。
+mutate_skill_add_opted_out() {
+  append_section "$1" "$2" '\n## Drift Probe Opted Out\n<!-- no-summary -->\n\nBody text.\n'
 }
 
 # 標題與它正下一行的標語一起刪掉 —— generator 要求兩者相鄰，只刪一行會變成另一種錯。
@@ -337,6 +342,10 @@ run_case "an unnumbered heading with a tagline added -> drift reported" 1 "Drift
 mutate_skill_add_unnumbered_bare "$SKILL" "$WORKDIR/unnumbered-bare.md"
 run_case "an unnumbered heading with no tagline -> the generator refuses" 1 "no summary comment" \
   check_drift "$WORKDIR/unnumbered-bare.md" "$HANDLER"
+
+mutate_skill_add_opted_out "$SKILL" "$WORKDIR/opted-out.md"
+run_case "a heading marked no-summary -> left out, no drift" 0 "" \
+  check_drift "$WORKDIR/opted-out.md" "$HANDLER"
 
 
 mutate_skill_remove_all "$SKILL" "$WORKDIR/emptied.md"

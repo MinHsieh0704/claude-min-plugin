@@ -256,6 +256,7 @@ Self-check: "Am I about to add another guard to the same construct?" If yes, pro
 ---
 
 ## When These Guidelines Are Working
+<!-- no-summary -->
 
 You will observe:
 - Fewer unnecessary changes in diffs.

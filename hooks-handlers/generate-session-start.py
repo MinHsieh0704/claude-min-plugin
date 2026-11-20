@@ -14,9 +14,10 @@ Microsoft Store 的空殼。
 的編號標題，標語取自標題「正下一行」的 <!-- summary: ... --> 註解。改了哪一節就改那一節
 的註解，然後重跑這支腳本 —— 兩份文字之間沒有東西可以走鐘，因為只剩一份。
 
-沒編號的標題（例如 Interaction Mode）一樣收進摘要，照文件順序、不帶編號。每個 ## 標題
-都必須帶標語，只有列在 NO_SUMMARY 裡的例外 —— 例外要明列，而不是「沒帶註解就當作不打算
-進摘要」：那樣的話，有人刪掉 Interaction Mode 的標語，它就會安靜地從每個 session 消失。
+沒編號的標題一樣收進摘要，照文件順序、不帶編號。每個 ## 標題的正下一行，要嘛是
+summary 註解，要嘛是 <!-- no-summary --> 明說這一節不進摘要 —— 例外要寫在標題旁邊，
+而不是「沒帶註解就當作不打算進摘要」：那樣的話，有人刪掉某一節的標語，它就會安靜地從
+每個 session 消失。標記跟著標題走，所以改標題名稱不必回頭改這支腳本。
 
 註解而不是可見文字：這樣 SKILL.md 讀起來跟以前一模一樣，代價是編輯某一節的人不會
 一眼看到它。標語是「整節的濃縮」，本來就不屬於渲染出來的內容。
@@ -34,9 +35,8 @@ import sys
 from pathlib import Path
 
 HEADING = re.compile(r"^## (?:(\d+)\. )?(.+)$")
-# 刻意不進摘要的 ## 標題。新增一個沒編號的標題時，要嘛給它標語，要嘛把它加進這裡。
-NO_SUMMARY = {"When These Guidelines Are Working"}
 SUMMARY = re.compile(r"^<!-- summary: (.*) -->$")
+NO_SUMMARY = "<!-- no-summary -->"
 CONTEXT = re.compile(r'^    "additionalContext": ')
 
 PREAMBLE = (
@@ -57,7 +57,7 @@ def fail(message):
 
 
 def entries(skill_path):
-    """SKILL.md 的每個 ## 標題（NO_SUMMARY 除外）配上它的標語：編號標題組成
+    """SKILL.md 的每個 ## 標題（標了 no-summary 的除外）配上它的標語：編號標題組成
     "<n>. <title> - <tagline>"，沒編號的組成 "<title> - <tagline>"。"""
     # SKILL.md 在 working tree 上是 CRLF（.gitattributes 只釘 *.sh），所以用 splitlines。
     lines = skill_path.read_bytes().decode("utf-8").splitlines()
@@ -67,16 +67,18 @@ def entries(skill_path):
         heading = HEADING.match(line)
         if not heading:
             continue
-        number, title = heading.groups()
-        if title in NO_SUMMARY:
+        next_line = lines[i + 1] if i + 1 < len(lines) else ""
+        if next_line == NO_SUMMARY:
             continue
+        number, title = heading.groups()
         label = "%s. %s" % (number, title) if number else title
         has_numbered = has_numbered or bool(number)
         # 只認「正下一行」：位置固定，漏寫或放錯地方都會在這裡大聲停下來，
         # 而不是安靜地少產生一個條目。
-        summary = SUMMARY.match(lines[i + 1]) if i + 1 < len(lines) else None
+        summary = SUMMARY.match(next_line)
         if not summary:
-            fail('no summary comment on the line after heading "%s" in %s' % (label, skill_path))
+            fail('no summary comment (or %s to leave it out) on the line after heading "%s" in %s'
+                 % (NO_SUMMARY, label, skill_path))
         # marker 後面兩個空格的 "<!-- summary:  -->" 也匹配得過，group(1) 是空的。
         # 擋在這裡，否則那一條準則會變成只剩編號、標題與一個懸空的破折號進到每個
         # session，而且下游沒有任何東西看得見。
