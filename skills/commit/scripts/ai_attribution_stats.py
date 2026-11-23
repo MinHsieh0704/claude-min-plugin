@@ -50,9 +50,7 @@ def load_commits(rev_range, path=None):
     try:
         raw = run_git(args)
     except subprocess.CalledProcessError as exc:
-        # git 本身已經指名它無法解析的東西（錯誤的 rev range、repo 外的路徑）。
-        # 直接把那段訊息透傳出去：resolve_short_sha() 依賴 run_git 會拋出例外，
-        # 所以這個 catch 該放在這裡，而不是放在那邊。
+        # git 本身已經指名它無法解析的東西（錯誤的 rev range、repo 外的路徑），直接透傳。
         sys.exit(f"error: git log failed: {exc.stderr.strip() or exc}")
     commits = {}
     order = []

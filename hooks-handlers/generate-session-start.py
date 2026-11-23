@@ -6,7 +6,7 @@ generate-session-start.py — 從 SKILL.md 重新產生 session-start.sh 的 add
     python hooks-handlers/generate-session-start.py [<SKILL.md> <session-start.sh>]
 
 每個 ## 標題的正下一行必須是 <!-- summary: ... --> 或 <!-- no-summary -->，缺了就大聲停下，
-免得某一節安靜地從每個 session 消失。需要 Python 3；Windows 上用 python 而不是 python3。
+免得某一節安靜地從每個 session 消失。執行環境的前提見 .claude/CLAUDE.md 的 Verification。
 handler 刻意維持靜態 heredoc：它每個 session 都跑，在那裡解析一旦失敗就是安靜地沒有準則。
 """
 
@@ -65,9 +65,10 @@ def main(argv):
     [i] = [n for n, line in enumerate(lines) if CONTEXT.match(line)]
     lines[i] = '    "additionalContext": ' + json.dumps(context)
     updated = "\n".join(lines).encode("utf-8")
-    if updated != original:
+    changed = updated != original
+    if changed:
         handler.write_bytes(updated)
-    print("%s: %s" % (handler, "regenerated" if updated != original else "already up to date"))
+    print("%s: %s" % (handler, "regenerated" if changed else "already up to date"))
 
 
 if __name__ == "__main__":

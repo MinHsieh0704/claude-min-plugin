@@ -32,15 +32,7 @@ extension, never whether it "looks like documentation".
   and dies in cp437. Symbols belong in the UI a repo renders, never in the stream it prints.
 - **CJK also reaches output through interpolation.** `print(f'the "{label}" column is empty')`
   has no CJK on the line but prints Chinese whenever `label` binds to a Chinese display name.
-  No scan sees this; step 6 checks it by hand. The fix is usually not to translate the
-  constant (it is often a UI label and a dict key at once) but to add a parallel English table
-  for the console side, guarded against drift at import time:
-
-  ```python
-  PERIOD_EN = {"<label-1>": "1D", "<label-2>": "1W"}
-  if PERIOD_EN.keys() != {label for label, _ in PERIODS}:
-      raise RuntimeError("PERIOD_EN must name exactly the labels in PERIODS")
-  ```
+  No scan sees this; step 6 checks it by hand.
 
 - Files a machine reads: `SKILL.md`, subagent definitions (`agents/<name>.md`), `CLAUDE.md`,
   `AGENTS.md`, manifests (`plugin.json`, `package.json`), hook configuration, and any string a
@@ -119,6 +111,15 @@ extension, never whether it "looks like documentation".
    name to where it is defined. A repo-defined constant carrying CJK or symbols is a violation
    even though steps 4 and 5 are clean. A value from user data (a filename, a record the user
    typed) must be echoed exactly as given — translating it is a bug, not compliance.
+   The fix for a repo constant is usually not to translate it (it is often a UI label and a
+   dict key at once) but to add a parallel English table for the console side, guarded against
+   drift at import time:
+
+   ```python
+   PERIOD_EN = {"<label-1>": "1D", "<label-2>": "1W"}
+   if PERIOD_EN.keys() != {label for label, _ in PERIODS}:
+       raise RuntimeError("PERIOD_EN must name exactly the labels in PERIODS")
+   ```
 
 7. Report per-file counts as `CJK lines / total lines`:
 

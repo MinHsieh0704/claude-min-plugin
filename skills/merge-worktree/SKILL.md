@@ -56,11 +56,7 @@ worktree session (the one EnterWorktree switched you into).
 
 - **Detect branch names and paths from `git worktree list` / `git branch` — never hardcode
   `master` vs `main`.**
-- **Fast-forward only.** No merge commit, and no rebase without asking (step 3).
-- **Never clobber the main checkout.** If the merge would overwrite its changes, stop.
 - **Do not push.** Stop after the merge and cleanup.
-- **Never `git branch -D` here.** If `-d` refuses, the merge in step 5 did not land — find out why
-  instead of forcing the delete.
 - Start this from inside the worktree session created by EnterWorktree: step 4's ExitWorktree only
   acts on a worktree it created in the current session, so a session that was never in one has
   nothing for this skill to land.
