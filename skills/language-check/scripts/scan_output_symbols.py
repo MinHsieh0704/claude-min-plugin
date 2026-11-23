@@ -3,23 +3,12 @@ r"""
 scan_output_symbols.py — 找出所有會進入 console 輸出的非 ASCII 字元。
 
 用法：
-    python3 scan_output_symbols.py <file.py> [<file.py> ...]
-    git ls-files '*.py' | xargs python3 scan_output_symbols.py
+    python scan_output_symbols.py <file.py> [<file.py> ...]
+    git ls-files '*.py' | xargs python scan_output_symbols.py
 
-有命中就以 exit code 1 結束，沒有則 0，方便直接掛進檢查流程。
-
-為什麼走語法樹而不是 grep：
-    逐行比對要求「輸出動詞」與「違規字元」落在同一行，但 Python 的隱式字串串接
-    會讓一個 print() 橫跨數行、訊息主體落在第二行 —— 那一行看起來只是個孤立的字串
-    常數，附近沒有任何動詞，任何逐行比對式都不可能接住。走 AST 就自動涵蓋。
-    實測（本 repo 的 skills/commit/scripts/ai_attribution_stats.py）：逐行 grep 看到
-    4 個，AST 看到 6 個 —— 差的兩個都是跨行串接。
-
-已知限制，是設計而非待辦：
-    **只看字面常數。** 非 ASCII 也可以「透過插值」進入輸出 ——
-    print(f'the "{label}" column is empty') 這一行本身一個非 ASCII 字元都沒有，
-    卻會在 label 綁到中文顯示名時印出中文。那一類文字掃描完全看不到，只能人工回溯
-    插值來源；SKILL.md 因此把它寫成規則，而不是交給這支腳本。
+收集 print()、raise 與 sys.exit() 底下的字串常數逐字元檢查；有命中以 1 結束，乾淨為 0，
+無法剖析為 2。它是 SKILL.md 步驟 4 那張網的 Python 交叉檢查：走 AST 不必判讀，跨行串接也
+照樣收得到。只看字面常數，插值帶進來的文字看不到，那一類由 SKILL.md 步驟 6 人工回溯。
 
 輸出刻意維持純 ASCII（字元經 ascii() 逃逸成 '\uXXXX'），這樣它自己就服從它正在
 檢查的那條規則：在任何 code page 的 console 上都不會拋 UnicodeEncodeError。
@@ -47,6 +36,10 @@ def output_kind(node):
             if kw.arg == "file":
                 return "print(stderr)"
         return "print(stdout)"
+    # sys.exit("訊息") 會把訊息印到 stderr。
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "exit"
+            and isinstance(node.func.value, ast.Name) and node.func.value.id == "sys"):
+        return "sys.exit"
     return None
 
 
