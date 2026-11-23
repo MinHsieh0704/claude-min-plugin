@@ -3,7 +3,7 @@
 #
 # 用法：bash hooks-handlers/tests/test-session-start.sh [handler] [skill-md]
 #
-# 前提是 Windows + Git Bash + GNU sed + Python 3（見 CLAUDE.md 的 Verification）。
+# 前提是 Windows + Git Bash + GNU sed + Python 3（見 .claude/CLAUDE.md 的 Verification）。
 # 突變都作用在暫存目錄的複本上；標語是否還描述得了它那一節，留給人或模型判斷。
 # 結束碼：全部符合預期為 0，否則為 1。
 

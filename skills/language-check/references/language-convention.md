@@ -96,7 +96,7 @@
 
 ### `README.md` 是中文，`CLAUDE.md` 是英文
 
-兩個都是根目錄的說明性散文，語言卻不同。因為讀者不同：`README.md` 給人讀，`CLAUDE.md` 給
+兩個都是說明性散文，語言卻不同。因為讀者不同：`README.md` 給人讀，`CLAUDE.md` 給
 Claude 讀。判準是誰讀，不是「是不是文件」。**不要為了整齊而統一它們。**
 
 ### `SKILL.md` 是英文，同一個 skill 的 `references/*.md` 是中文
