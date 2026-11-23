@@ -22,7 +22,7 @@ claude --plugin-dir /path/to/this/repo
 | Skill | 功能 |
 |---|---|
 | `/claude-min-plugin:coding-guidelines` | 一整套準則，涵蓋臆測、範圍蔓延、API 查證、未執行的驗證不得宣稱通過、資安、相依套件、回歸風險、根因與錯誤處理，以及無人值守時該如何處理「先問再做」。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
-| `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立那一個 commit — 同批的其他 commit 照常建立。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
+| `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立這一個與這次後面的 commit。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
 | `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。 |
 | `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，抓出混進 `echo` / `print` / `throw` 的中文字元與非 ASCII 符號，並以 AST 掃描逐行 grep 看不到的跨行輸出敘述，以及完全不經輸出動詞的輸出（例如 heredoc 吐出的 JSON）。只分析與回報，不會自行改寫。 |
 
@@ -76,58 +76,21 @@ Refs: BUG-1234
 commit；當 git blame 結論不明時則寫 `Fixes: unknown`，並可搭配一份選用的
 `Fixes-Candidates:` 清單。
 
-`Refs:` 記錄你們團隊所用追蹤系統的 issue 編號。你可以直接傳入 —
-`/claude-min-plugin:commit BUG-1234`，多個編號就重複這個 trailer — 那次呼叫產生的
-每個 commit 都會帶上它。什麼都不傳的話，會在每個 commit 建立前的那一刻問你一次，
-預設值是「沒有追蹤編號」；每個 commit 各自保留自己的答案，所以要讓兩個 commit 帶
-同一個編號，就得輸入兩次。這個編號永遠不會從分支名稱或 diff 推測出來，也不會以猜測
-選項的形式讓你點選 — 只有你明講的內容會被寫入，沒帶編號的 commit 就單純沒有 `Refs:`
-這一行。
+`Refs:` 記錄你們團隊追蹤系統的編號，只寫你明講的內容，不會從分支名稱或 diff 推測。
+呼叫時直接傳入（`/claude-min-plugin:commit BUG-1234`，多個編號用空白隔開），這次產生的
+每個 commit 都會帶上；沒傳的話，每個 commit 建立前各問一次，預設是不加。`commit-msg`
+hook 不檢查這個編號，打錯了不會被攔下。
 
-那次提問也是整個流程唯一會停下來的地方，所以它一併充當煞車：第三個選項「先看 diff」
-不回答 trailer，而是印出 `git diff --staged` 與原本要用的完整訊息，然後不建立那個 commit。
+那次提問的第三個選項「先看 diff」是煞車：印出 `git diff --staged` 與擬好的訊息，**這個
+commit 與這次後面的 commit 都不建立**，留在工作目錄；已建立的 commit 不受影響。看完再叫
+一次 skill 就會從剩下的改動繼續。呼叫時已帶編號或在 headless 執行時不會提問，也就沒有煞車。
 
-煞車只擋一個 commit，不是整次呼叫。拆分的前提本來就是各組獨立到足以各自帶自己的
-trailer，所以擋掉其中一個，對其他組沒有影響。被擋下的那組會從 index 取消 stage，一方面
-免得被下一個 commit 一起吃進去，另一方面讓收尾時的 `git status` 剛好只列出你還沒看過的
-東西：
-
-| 情況 | 結果 |
-|---|---|
-| 沒有拆分，選「先看 diff」 | 不建立 commit。index 維持不動 — 這種情況是用 `git add -A` stage 的，可能掃進了你自己先 stage 好的東西，不該替你取消。 |
-| 拆成三個，在第 2 個喊停 | 第 1 個維持已建立，第 3 個依它自己的答案照常建立。第 2 組取消 stage，留在工作目錄。 |
-| 拆成三個，在第 2 個喊停，而第 3 組用到第 2 組新加的東西 | 第 1 個維持已建立；第 2、3 組一起擋下，都留在工作目錄，並明講是哪幾組、為什麼連帶擋。 |
-| 拆成三個，在最後一個喊停 | 前兩個維持已建立，第 3 組取消 stage 留在工作目錄。 |
-| 拆成三個，三個都喊停 | 一個 commit 都沒有，三組全部取消 stage 留在工作目錄。 |
-| 呼叫時就帶了編號（`/claude-min-plugin:commit BUG-1234`） | 不會有這道提問，也就沒有這個煞車。煞車要解決的是「skill 自己發動、你還沒看過 diff」；帶編號代表這次是你主動發起的，不需要再攔一次。 |
-| headless／自動化，問不了 | 同樣沒有煞車。直接 commit、不帶 `Refs:`，並說明沒有記錄編號。 |
-
-第三列那個例外關乎正確性而非整潔：若後面某組用到了被擋下那組新加的東西，單獨 commit 它
-會留下建不起來的樹。已經建立的 commit 絕不會被 amend 或 reset。看完想繼續，再叫一次這個
-skill 就好 — 它會從工作目錄剩下的改動重新開始，重新產生訊息、也重新問一次編號。
-
-`commit-msg` hook 同樣不檢查它：那支 hook 會進到每一個安裝此外掛的 repo，而
-issue 編號規則是各團隊自家的慣例，不該強加於所有人。編號打錯了，沒有任何東西會攔下來。
-
-這個 skill 會直接把 `skills/commit/hooks/commit-msg` 以 git `commit-msg` hook 的形式
-（透過 `core.hooksPath`）裝進你的 repo，不另行詢問。該 hook 會擋下沒有 `Fixes:`
-trailer 的 `fix` commit，並在出現 `Co-Authored-By: Claude` 卻缺少 `AI-Contribution`
-時發出警告。它絕不動不屬於本慣例的 `commit-msg` hook；屬於自己的那份則會持續維持最新，
-透過檔案標頭中的 `hook-version` 標記就地升級過舊的安裝。
-
-`.githooks/` 刻意不納入版控（進了版控的第二份副本會自由地跟正本漂移），代價是此後
-`git status` 會永遠多一行 `?? .githooks/`。所以**第一次安裝時**會問你要不要順手把它寫進
-`.gitignore`，三個選項，建議第一個：
-
-| 選項 | 說明 |
-|---|---|
-| `.githooks/commit-msg`（建議） | 只忽略這個外掛建立的那一個檔案。 |
-| `.githooks/` | 忽略整個目錄。但 `core.hooksPath` 已經把整個 repo 指向那裡，之後團隊若在其中加一支共用 hook，會被無聲吞掉。 |
-| 不動 `.gitignore` | 保留那行 untracked 訊息。 |
-
-只在第一次安裝時問，重新啟用、版本升級與健康的 repo 都不會問；已經被忽略的話也不會問。
-寫進去的那一行**不會**被帶進這次的 commit —— 它屬於 repo 管線而非你要記錄的改動，會留在
-未 stage 的狀態讓你另外處理。
+第一次 commit 時，skill 會把 `commit-msg` hook 裝進 repo 的 `.githooks/`（透過
+`core.hooksPath`），之後自動維持最新版本；repo 已有別人的 `commit-msg` hook 時不會動它。
+這支 hook 會擋下沒有 `Fixes:` 的 `fix` commit，並在有 `Co-Authored-By: Claude` 卻缺少
+`AI-Contribution` 時發出警告。`.githooks/` 不進版控，所以第一次安裝時會問要不要把
+`.githooks/commit-msg` 加進 `.gitignore`（建議只加這個檔案，不加整個目錄）；那一行會留在
+未 stage 的狀態讓你另外 commit，`.gitignore` 當下已有未 commit 的改動時則只提示、不代寫。
 
 `skills/commit/scripts/ai_attribution_stats.py` 會從這些 trailer 產出整體歸屬統計與
 一份 fix 連結對照表。設計理由與已知限制見
