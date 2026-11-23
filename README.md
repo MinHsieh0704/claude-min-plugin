@@ -11,6 +11,10 @@ coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 wo
 /plugin install min-toolkit@min-plugins
 ```
 
+這個外掛原名 `claude-min-plugin`。已經裝過舊名稱的話，marketplace 不會再提供它的更新，請先移除
+`claude-min-plugin@min-plugins`，再安裝上面的 `min-toolkit@min-plugins`，並重新設定兩個選項。
+指令也從 `/claude-min-plugin:*` 改成 `/min-toolkit:*`。
+
 啟用外掛時會詢問兩個選項（下文皆有說明）。若不想安裝、只想在本機載入：
 
 ```bash
