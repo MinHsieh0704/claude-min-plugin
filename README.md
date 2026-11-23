@@ -133,15 +133,6 @@ trailer 的 `fix` commit，並在出現 `Co-Authored-By: Claude` 卻缺少 `AI-C
 一份 fix 連結對照表。設計理由與已知限制見
 `skills/commit/references/ai-attribution-proposal.md`（以繁體中文撰寫）。
 
-## 開發
-
-本 repo 遵循的外掛開發規則見 [CLAUDE.md](CLAUDE.md)。
-
-```bash
-claude plugin validate . --strict
-bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg
-```
-
 ## 授權
 
 MIT — 見 [LICENSE](LICENSE)。
