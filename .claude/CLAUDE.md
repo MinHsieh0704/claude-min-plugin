@@ -14,7 +14,7 @@ The repository root **is** the plugin (`min-toolkit`) and also its own marketpla
 
 `hooks-handlers/session-start.sh` no longer holds a hand-written summary. Every `##` heading in `SKILL.md`, numbered or not, carries its one-line tagline in a `<!-- summary: ... -->` comment on the line right below it (or `<!-- no-summary -->` there to stay out of the summary), and the handler's `additionalContext` line is produced from those by `hooks-handlers/generate-session-start.py`. **Never hand-edit that line** — edit the comment beside the heading and re-run the generator. `hooks-handlers/tests/test-session-start.sh` regenerates and compares byte for byte, so a handler that is not the generator's current output turns it red. **What no check can reach is a tagline that no longer describes its own section** — that one is a model or reviewer judgment: whenever a section of `SKILL.md` changes, reread its tagline against it. Keep the generator and its test small (coding guidelines 2 and 11): no guard for a failure that cannot realistically occur.
 
-The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, `references/language-convention.md` holds the reasoning, and `scripts/scan_output_symbols.py` is a mechanical cross-check for Python against the skill's one-net scan, whose candidates the model classifies by hand. The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there. The convention governs this repo too, so run `/min-toolkit:language-check` after touching comments, output strings, or docs.
+The same shape applies to the language convention: `skills/language-check/` is the only copy of the rule — `SKILL.md` states it and runs the audit, and `references/language-convention.md` holds the reasoning. The audit is deliberately script-free: one grep net, whose candidates the model classifies by hand. The language-split table in `README.md` is a *derived* summary of it; update that table by hand when the rule changes, because nothing detects drift there. The convention governs this repo too, so run `/min-toolkit:language-check` after touching comments, output strings, or docs.
 
 Both manifests carry a plugin `description`, and they must stay identical: `.claude-plugin/plugin.json` and the `plugins[0].description` in `.claude-plugin/marketplace.json`. Editing one and not the other is silent — nothing validates that they agree.
 
@@ -46,7 +46,6 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
 bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect all pass
 bash hooks-handlers/tests/test-session-start.sh   # expect all pass - the handler is the generator's output
-git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
 

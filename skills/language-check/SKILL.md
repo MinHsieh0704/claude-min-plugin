@@ -32,7 +32,7 @@ extension, never whether it "looks like documentation".
   and dies in cp437. Symbols belong in the UI a repo renders, never in the stream it prints.
 - **CJK also reaches output through interpolation.** `print(f'the "{label}" column is empty')`
   has no CJK on the line but prints Chinese whenever `label` binds to a Chinese display name.
-  No scan sees this; step 6 checks it by hand.
+  No scan sees this; step 5 checks it by hand.
 
 - Files a machine reads: `SKILL.md`, subagent definitions (`agents/<name>.md`), `CLAUDE.md`,
   `AGENTS.md`, manifests (`plugin.json`, `package.json`), hook configuration, and any string a
@@ -43,8 +43,8 @@ extension, never whether it "looks like documentation".
 ## Steps
 
 1. Enumerate what is in scope: `git ls-files`. Audit tracked files only. The locale matters, and
-   differently per step: the CJK-range greps (steps 2 and 7) need a UTF-8 locale, or `grep -P`
-   rejects the ranges and step 7's loop prints an empty table instead of failing; step 4 needs
+   differently per step: the CJK-range greps (steps 2 and 6) need a UTF-8 locale, or `grep -P`
+   rejects the ranges and step 6's loop prints an empty table instead of failing; step 4 needs
    `LC_ALL=C`, because a UTF-8 locale makes it skip bytes that are not valid UTF-8 (a Big5 or
    cp950 file) and report that file clean. The commands below set each one explicitly.
 
@@ -93,24 +93,9 @@ extension, never whether it "looks like documentation".
    (a heredoc printing a `#` heading) is dropped by the filter. When a heredoc or template
    emits such lines, read it whole.
 
-5. **Python cross-check:** `scripts/scan_output_symbols.py` in this skill's directory walks the
-   AST and lists every non-ASCII character in a string literal under `print()`, `raise`, or
-   `sys.exit()`:
-
-   ```bash
-   SCAN="${CLAUDE_PLUGIN_ROOT}/skills/language-check/scripts/scan_output_symbols.py"
-   git ls-files '*.py' | xargs python "$SCAN"
-   ```
-
-   Use `python3` only where `python` is absent; on Windows `python3` is usually a Microsoft
-   Store stub that prints nothing and exits 49. It exits 0 when clean, 1 on findings, 2 when a
-   file cannot be parsed. Every hit it reports must also be in step 4's "output" bucket — a
-   hit missing there means a candidate was misclassified. If it cannot run, say step 5 was not
-   run; never replace it with a hand read and report that as its result.
-
-6. **Interpolation, by hand.** For each output statement that interpolates a value, follow the
+5. **Interpolation, by hand.** For each output statement that interpolates a value, follow the
    name to where it is defined. A repo-defined constant carrying CJK or symbols is a violation
-   even though steps 4 and 5 are clean. A value from user data (a filename, a record the user
+   even though step 4 is clean. A value from user data (a filename, a record the user
    typed) must be echoed exactly as given — translating it is a bug, not compliance.
    The fix for a repo constant is usually not to translate it (it is often a UI label and a
    dict key at once) but to add a parallel English table for the console side, guarded against
@@ -122,7 +107,7 @@ extension, never whether it "looks like documentation".
        raise RuntimeError("PERIOD_EN must name exactly the labels in PERIODS")
    ```
 
-7. Report per-file counts as `CJK lines / total lines`:
+6. Report per-file counts as `CJK lines / total lines`:
 
    ```bash
    for f in $(git ls-files); do
@@ -131,9 +116,9 @@ extension, never whether it "looks like documentation".
    done
    ```
 
-8. Summarise in this order: the split (how many files each way), the per-file table, then the
+7. Summarise in this order: the split (how many files each way), the per-file table, then the
    observed language of **code comments**, **stdout/print messages**, and **error/exception
-   messages**. Close with the violations from steps 2, 4, 5 and 6, console and UI counted
+   messages**. Close with the violations from steps 2, 4 and 5, console and UI counted
    separately, plus step 4's bucket counts. A clean audit reports zeros *and* the bucket
    arithmetic that backs them, never the word "clean" on its own.
 
