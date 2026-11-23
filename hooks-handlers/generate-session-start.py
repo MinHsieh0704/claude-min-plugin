@@ -22,14 +22,14 @@ NO_SUMMARY = "<!-- no-summary -->"
 CONTEXT = re.compile(r'^    "additionalContext": ')
 
 PREAMBLE = (
-    "claude-min-plugin coding guidelines are active. "
+    "min-toolkit coding guidelines are active. "
     "Follow these while writing or modifying code:\n\n"
 )
 POSTAMBLE = (
     "\n\nThese bias toward caution over speed; use judgment on trivial tasks such as "
     "typo fixes and one-line changes.\n\n"
     "Full text with rationale, examples, and the inline-note formats: "
-    "run /claude-min-plugin:coding-guidelines."
+    "run /min-toolkit:coding-guidelines."
 )
 
 

@@ -116,7 +116,7 @@ commit message 是產出的成品，會被 push 出去，讀者不限於這個�
 
 ### 這條規則和 `reply_zh_hant` 選項無關
 
-最容易搞混的一組。`claude-min-plugin` 的 `reply_zh_hant` 選項管的是 **Claude 用什麼語言
+最容易搞混的一組。`min-toolkit` 的 `reply_zh_hant` 選項管的是 **Claude 用什麼語言
 「回覆」使用者**；這份文件管的是 **檔案內容用什麼語言「撰寫」**。兩者互不影響：即使關掉
 `reply_zh_hant`，程式碼註解仍然是繁中；即使開著，error message 仍然是英文。
 `hooks-handlers/user-prompt-submit.sh` 注入的文字第二句就是為了把這兩件事分開才存在的。

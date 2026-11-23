@@ -1,4 +1,4 @@
-# claude-min-plugin
+# min-toolkit
 
 一個包含四個 skill 與三個 hook 的 Claude Code 外掛：一套用來減少 LLM 常見錯誤的
 coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 worktree 合併輔助
@@ -8,7 +8,7 @@ coding guidelines、一套會記錄 AI 貢獻歸屬的 commit 流程、一個 wo
 
 ```
 /plugin marketplace add MinHsieh0704/claude-min-plugin
-/plugin install claude-min-plugin@min-plugins
+/plugin install min-toolkit@min-plugins
 ```
 
 啟用外掛時會詢問兩個選項（下文皆有說明）。若不想安裝、只想在本機載入：
@@ -21,10 +21,10 @@ claude --plugin-dir /path/to/this/repo
 
 | Skill | 功能 |
 |---|---|
-| `/claude-min-plugin:coding-guidelines` | 一整套準則，涵蓋臆測、範圍蔓延、API 查證、未執行的驗證不得宣稱通過、資安、相依套件、回歸風險、根因與錯誤處理，以及無人值守時該如何處理「先問再做」。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
-| `/claude-min-plugin:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立這一個與這次後面的 commit。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
-| `/claude-min-plugin:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。worktree 落後主分支時會說明情況，問你要不要先 rebase。只能在 Claude 以 EnterWorktree 建立的 worktree session 內使用。 |
-| `/claude-min-plugin:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，把程式碼中每一行含非 ASCII 字元的行逐一分類，找出進入輸出的中文與符號（包含跨行敘述與 heredoc 吐出的 JSON），Python 另以 AST 交叉檢查。只分析與回報，不會自行改寫。 |
+| `/min-toolkit:coding-guidelines` | 一整套準則，涵蓋臆測、範圍蔓延、API 查證、未執行的驗證不得宣稱通過、資安、相依套件、回歸風險、根因與錯誤處理，以及無人值守時該如何處理「先問再做」。每個 session 都會注入一份精簡版；這個 skill 提供的是含理由與範例的完整全文。 |
+| `/min-toolkit:commit` | 不再逐次徵詢同意即完成 stage 與 commit，產生符合 Conventional Commits 的標題，加上 `Co-Authored-By` / `AI-Contribution` / `Fixes:` trailer，以及由你傳入的追蹤編號所組成的 `Refs:` trailer — 沒傳的話，每個 commit 會問你一次。那次提問同時是你喊停的地方：選第三個選項就會把 `git diff --staged` 與擬好的訊息攤開給你看，並且不建立這一個與這次後面的 commit。當單一組 trailer 無法誠實描述整份 diff 時，會拆成多個 commit。 |
+| `/min-toolkit:merge-worktree` | 將目前 worktree 的分支 fast-forward 進主 checkout，接著移除該 worktree 與其分支。worktree 落後主分支時會說明情況，問你要不要先 rebase。只能在 Claude 以 EnterWorktree 建立的 worktree session 內使用。 |
+| `/min-toolkit:language-check` | 稽核 repo 內繁體中文與英文的分界：註解與人讀文件用繁中，所有 runtime 輸出、`SKILL.md`、`agents/<name>.md` 與 manifest 用英文，且輸出必須是純 ASCII。回報逐檔比例，把程式碼中每一行含非 ASCII 字元的行逐一分類，找出進入輸出的中文與符號（包含跨行敘述與 heredoc 吐出的 JSON），Python 另以 AST 交叉檢查。只分析與回報，不會自行改寫。 |
 
 ## 語言分界
 
@@ -59,7 +59,7 @@ coding-guidelines 摘要是無條件注入的，沒有對應選項 — 不想要
 
 ## Commit 慣例
 
-`/claude-min-plugin:commit` 只會寫入一組固定的 trailer，不會有別的 —— 完整清單在
+`/min-toolkit:commit` 只會寫入一組固定的 trailer，不會有別的 —— 完整清單在
 `skills/commit/SKILL.md`，這裡只舉例：
 
 ```
@@ -77,7 +77,7 @@ commit；當 git blame 結論不明時則寫 `Fixes: unknown`，並可搭配一�
 `Fixes-Candidates:` 清單。
 
 `Refs:` 記錄你們團隊追蹤系統的編號，只寫你明講的內容，不會從分支名稱或 diff 推測。
-呼叫時直接傳入（`/claude-min-plugin:commit BUG-1234`，多個編號用空白隔開），這次產生的
+呼叫時直接傳入（`/min-toolkit:commit BUG-1234`，多個編號用空白隔開），這次產生的
 每個 commit 都會帶上；沒傳的話，每個 commit 建立前各問一次，預設是不加。`commit-msg`
 hook 不檢查這個編號，打錯了不會被攔下。
 

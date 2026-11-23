@@ -17,7 +17,7 @@ worktree session (the one EnterWorktree switched you into).
    - `git branch -vv` → note the **worktree branch** (current, marked `*`) and the **target
      branch** checked out in the main checkout (e.g. `master` or `main` — detect it, never hardcode).
 2. The worktree work must be committed first. If `git status` in the worktree is dirty, commit it
-   (e.g. run `/claude-min-plugin:commit`) or stop — there is nothing to fast-forward otherwise.
+   (e.g. run `/min-toolkit:commit`) or stop — there is nothing to fast-forward otherwise.
 3. Confirm it is a clean fast-forward: `git merge-base --is-ancestor <target> <worktree-branch>`.
    - **Ancestor** → continue.
    - **Not an ancestor** → the target has commits the worktree branch lacks (common when the

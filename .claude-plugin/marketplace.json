@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "claude-min-plugin",
+      "name": "min-toolkit",
       "source": "./",
       "description": "Coding guidelines that reduce common LLM mistakes, plus a commit workflow with AI-attribution trailers, a worktree merge helper, and a zh-Hant/English language-split auditor",
       "category": "development",

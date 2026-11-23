@@ -1,5 +1,5 @@
 {
-  "description": "claude-min-plugin: coding-guidelines injection (always on), plus a reply-language hook and a git-commit confirmation gate, both controlled by the plugin's userConfig options",
+  "description": "min-toolkit: coding-guidelines injection (always on), plus a reply-language hook and a git-commit confirmation gate, both controlled by the plugin's userConfig options",
   "hooks": {
     "SessionStart": [
       {

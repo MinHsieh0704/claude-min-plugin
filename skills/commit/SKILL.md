@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Stage changes and commit with a generated conventional commit message in English, splitting into multiple commits when needed for trailer accuracy, without asking for confirmation. Invoked as /claude-min-plugin:commit [tracker-id ...] - any ids given become Refs trailers on every commit of that call and suppress the question that would otherwise ask for them.
+description: Stage changes and commit with a generated conventional commit message in English, splitting into multiple commits when needed for trailer accuracy, without asking for confirmation. Invoked as /min-toolkit:commit [tracker-id ...] - any ids given become Refs trailers on every commit of that call and suppress the question that would otherwise ask for them.
 ---
 
 # Commit
