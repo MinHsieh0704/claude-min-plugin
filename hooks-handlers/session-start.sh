@@ -1,20 +1,10 @@
 #!/usr/bin/env bash
 #
-# SessionStart handler — 注入精簡版的 coding guidelines。
+# SessionStart handler — 注入精簡版的 coding guidelines；一律啟用，沒有 userConfig 開關。
 #
-# 底下 additionalContext 那一行是「產生」出來的，不要手改：每個 ## 標題與它的單行
-# 標語都住在 skills/coding-guidelines/SKILL.md（標語是標題正下一行的 HTML 註解；
-# 不進摘要的標題，正下一行改寫 <!-- no-summary -->）。
-# 改完那邊，跑這個指令把這一行重新產生出來：
-#
+# additionalContext 那一行是產出物，不要手改：改 SKILL.md 標題下的 summary 註解，再跑
 #     python hooks-handlers/generate-session-start.py
-#
-# 忘記重跑會被 hooks-handlers/tests/test-session-start.sh 擋下來。
-#
-# 完整全文刻意不進入每個 session 的 context（約 4k token）；Claude 會在
-# 需要時透過 /claude-min-plugin:coding-guidelines 自行讀取。
-#
-# 一律啟用：這支 handler 沒有 userConfig 開關。不想要這套準則的使用者請停用整個外掛。
+# 完整全文（約 4k token）刻意不注入，需要時由 /claude-min-plugin:coding-guidelines 讀取。
 
 cat << 'EOF'
 {
