@@ -42,15 +42,16 @@ extension, never whether it "looks like documentation".
 
 ## Steps
 
-1. Enumerate what is in scope: `git ls-files`. Audit tracked files only. Run everything below
-   under a UTF-8 locale (`export LC_ALL=C.UTF-8` when `LANG` is unset): otherwise `grep -P`
-   rejects the CJK ranges in steps 2 and 7, and step 7's loop prints an empty table instead of
-   failing.
+1. Enumerate what is in scope: `git ls-files`. Audit tracked files only. The locale matters, and
+   differently per step: the CJK-range greps (steps 2 and 7) need a UTF-8 locale, or `grep -P`
+   rejects the ranges and step 7's loop prints an empty table instead of failing; step 4 needs
+   `LC_ALL=C`, because a UTF-8 locale makes it skip bytes that are not valid UTF-8 (a Big5 or
+   cp950 file) and report that file clean. The commands below set each one explicitly.
 
 2. Split the files into "contains CJK" and "pure English":
 
    ```bash
-   grep -rlP '[\x{4e00}-\x{9fff}\x{3000}-\x{303f}\x{ff00}-\x{ffef}]' $(git ls-files)
+   LC_ALL=C.UTF-8 grep -rlP '[\x{4e00}-\x{9fff}\x{3000}-\x{303f}\x{ff00}-\x{ffef}]' $(git ls-files)
    ```
 
    (CJK ideographs, CJK punctuation, fullwidth forms. U+2014 em dash is deliberately left out
@@ -69,7 +70,7 @@ extension, never whether it "looks like documentation".
 4. **One net: every non-ASCII character on a line that is not a line-start comment.**
 
    ```bash
-   echo "$TEXT" | xargs grep -nP '[^\x00-\x7F]' | grep -vP '^[^:]*:\d+:\s*(#|//)'
+   echo "$TEXT" | LC_ALL=C xargs grep -nP '[^\x00-\x7F]' | LC_ALL=C grep -vP '^[^:]*:\d+:\s*(#|//)'
    ```
 
    Any non-ASCII character that reaches output sits on such a line — whatever the output verb,
@@ -125,7 +126,7 @@ extension, never whether it "looks like documentation".
 
    ```bash
    for f in $(git ls-files); do
-     n=$(grep -cP '[\x{4e00}-\x{9fff}]' "$f") || true
+     n=$(LC_ALL=C.UTF-8 grep -cP '[\x{4e00}-\x{9fff}]' "$f") || true
      [ "$n" -gt 0 ] && printf '%-56s %4s / %4s\n' "$f" "$n" "$(wc -l < "$f")"
    done
    ```
