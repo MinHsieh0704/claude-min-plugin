@@ -28,7 +28,7 @@ extension, never whether it "looks like documentation".
 - **Runtime output must be plain ASCII**, not merely free of CJK. A symbol — `⚠`, `→`, `✓`, an
   em dash, an emoji — is a character the receiving console may be unable to encode: on a
   non-UTF-8 code page Python's stdout raises `UnicodeEncodeError` and kills the run, while
-  stderr silently degrades it to `⚠`. Surviving one code page is luck: `→` lives in cp950
+  stderr silently degrades it to `\u26a0`. Surviving one code page is luck: `→` lives in cp950
   and dies in cp437. Symbols belong in the UI a repo renders, never in the stream it prints.
 - **CJK also reaches output through interpolation.** `print(f'the "{label}" column is empty')`
   has no CJK on the line but prints Chinese whenever `label` binds to a Chinese display name.
