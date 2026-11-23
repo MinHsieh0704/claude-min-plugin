@@ -2,43 +2,12 @@
 # commit-msg hook — enforce AI-attribution / fix-linkage conventions.
 # hook-version: 1
 #
-# 只要下方的「強制檢查行為」有變動，就把這個數字往上加。commit skill 會拿它與
-# 某個 repo 內已安裝的副本比對，並更新所有較舊的版本；版本相同時即使檔案內容有
-# 差異也不會動它，所以純註解的修改「不可」bump 這個數字。此外，該 skill 是靠上
-# 一行的標語認出這個檔案是它自己的 — 那行文字請維持原樣，勿翻譯或改寫。
+# 只有強制檢查行為改變時才 bump 上面的版本號（commit skill 靠它升級舊副本，純註解修改不 bump）；
+# 第二行的標語是 skill 認出這個檔案的依據，勿改寫。安裝方式與路徑規則見 ../SKILL.md 步驟 2。
 #
-# 安裝（每個 repo 各做一次）：
-#   mkdir -p .githooks
-#   cp commit-msg .githooks/commit-msg
-#   chmod +x .githooks/commit-msg
-#   git config core.hooksPath \
-#     "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.githooks"
-#
-# 路徑必須是絕對路徑，而且要錨定在主 checkout 上：.githooks/ 未納入版控，所以
-# 相對的 core.hooksPath 會相對於各個 linked worktree 自己的根目錄解析，在那裡
-# 找不到東西，git 便會靜靜地不執行任何 hook。core.hooksPath 屬於共用設定，因此
-# 用 --git-common-dir（而非 --show-toplevel）才能讓它在從 worktree 內執行時，
-# 依然指向主 checkout。
-#
-# 規則：任何標題類型為 "fix" 的 commit（Conventional Commits 風格：
-# `fix: description`，也可寫成 `fix(scope): description`）都必須帶有
-# Fixes: <sha-or-unknown> trailer。有了這層連結，後續工具才有辦法回答
-# 「引入這次修正所觸及之程式碼的是哪個 commit，而那個 commit 是 AI 還是人寫的」。
-#
-# 關於字詞清單的說明：commit skill 只會產生 Conventional Commits 的 "fix" 這個
-# 類型（見 SKILL.md）— 冒號前只用這一個標準字，好讓 grep／log 查詢與
-# commitlint 之類的工具維持可靠。而這支 hook 的偵測範圍刻意比那單一個字更寬，
-# 有兩個原因：
-#   1. 手動輸入的 commit 完全繞過該 skill，可能改用同義字而非標準類型。
-#   2. 早於本慣例的歷史紀錄採用舊有的「動詞開頭、完全沒有冒號」寫法 — 那些
-#      commit 仍然需要被攔下，所以當沒有 `type:` 前綴時，這支 hook 會退回去
-#      檢查第一個字。
-# 話雖如此，這仍是一份封閉字詞清單，而封閉清單本質上就不可能窮盡 — 使用清單外
-# 動詞的 commit（例如 "repair"、"address"、"workaround"）就會漏網。這個缺口是
-# 已知且可接受的限制，不是疏忽。
-#
-# 至於為何是用 hook 強制檢查、而非透過 git blame / SZZ 自動推論，理由見
-# ../references/ai-attribution-proposal.md。
+# 規則：fix 類型的 commit 必須帶 Fixes: <sha|unknown>。字詞清單刻意比 skill 只產生的 "fix" 寬，
+# 好攔下手寫的同義字與沒有冒號的舊式寫法；清單外的動詞（如 "repair"）會漏網，這是已接受的限制。
+# 為何用 hook 而非 git blame / SZZ 推論，見 ../references/ai-attribution-proposal.md。
 
 set -euo pipefail
 

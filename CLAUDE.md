@@ -44,8 +44,8 @@ Shell-form hook commands **reject** `${user_config.*}` substitution — handlers
 
 ```bash
 claude plugin validate . --strict          # validates the MARKETPLACE manifest
-bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect 17/17
-bash hooks-handlers/tests/test-session-start.sh   # expect 6/6 - the handler is the generator's output
+bash skills/commit/tests/test-commit-msg-hook.sh skills/commit/hooks/commit-msg   # expect all pass
+bash hooks-handlers/tests/test-session-start.sh   # expect all pass - the handler is the generator's output
 git ls-files '*.py' | xargs python skills/language-check/scripts/scan_output_symbols.py   # expect 0
 claude --plugin-dir .                      # load without installing
 ```
@@ -54,7 +54,7 @@ claude --plugin-dir .                      # load without installing
 
 Doing so reports one warning: *"CLAUDE.md at the plugin root is not loaded as project context."* **This is expected — do not delete CLAUDE.md to silence it.** This file exists for developing this repo; it is inert baggage in an installer's plugin cache, which is the unavoidable cost of the root-is-the-plugin layout. Everything else validates clean under `--strict`.
 
-Any change to `skills/commit/hooks/commit-msg` requires the test suite to pass at 17/17 before it is considered done.
+Any change to `skills/commit/hooks/commit-msg` requires its test suite to pass in full before it is considered done.
 
 ## Commit convention
 
