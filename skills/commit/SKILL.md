@@ -22,7 +22,7 @@ Stage and commit the current changes without asking for confirmation — as one 
    - **Set elsewhere, but the hook is ours** (the configured path's `commit-msg` is ours, or that path holds nothing while `CANONICAL/commit-msg` is ours) → re-point `core.hooksPath` at CANONICAL, run the version check, and say once that the path was corrected.
    - **Anything else** (someone else's `commit-msg`, or no hook of ours anywhere) → **touch neither the hook nor git config.** Proceed, and if the diff needs a `fix` commit, mention once that the `Fixes:` requirement won't be enforced here.
    - **Version check** (only against a hook that is ours): if the installed version is lower than BUNDLED's, overwrite it with BUNDLED, `chmod +x` it, and say once which version it moved from and to. Equal versions are left alone even when the files differ — that is a local edit, not staleness.
-   - **`.gitignore`, offered once, on first install only.** Ask with AskUserQuestion — header `gitignore`, options in this order: *`.githooks/commit-msg`* (recommended: the plugin created only that file, and ignoring the whole directory would swallow a shared hook the team adds there later), *`.githooks/`*, *leave `.gitignore` alone*. Skip the question when the entry is already covered, and never ask on a re-activation, version bump, or healthy repo.
+   - **`.gitignore`, offered once, on first install only.** Ask with AskUserQuestion — header `gitignore`, options in this order: *`.githooks/commit-msg`* (recommended; its description tells the user that ignoring the whole directory would also hide any hook the team adds there later), *`.githooks/`*, *leave `.gitignore` alone*. Skip the question when the entry is already covered, and never ask on a re-activation, version bump, or healthy repo.
      - **If `.gitignore` already has uncommitted changes, do not ask and do not edit it.** Say once which line to add by hand, then continue.
      - **If AskUserQuestion is unavailable** (headless), write nothing and say nothing.
      - Otherwise append the chosen line to the root `.gitignore` (creating it if needed) as its own block: a blank line, a one-line comment naming what it covers, then the rule. Leave that edit unstaged — stage by explicit paths for the rest of this invocation, and say once that the `.gitignore` edit was left for its own commit.
@@ -74,7 +74,7 @@ Stage and commit the current changes without asking for confirmation — as one 
 
 ## Rules
 
-- **Do not ask for confirmation** before staging or committing. The only interruptions are step 2's first-install `.gitignore` question and Trailer 4's question; both ask for a decision only a human has, and the hold option is a brake the human may pull, not a request for permission.
+- **Do not ask for confirmation** before staging or committing. The only interruptions are step 2's first-install `.gitignore` question and Trailer 4's question; neither asks permission.
 - **Do not amend** existing commits. **Do not push.**
 - If the tree is clean, say so and stop — no empty commit.
 - **Splitting**: split by path or hunk when parts of the diff would need _different_ trailers to be described honestly (a `fix` with its own `Fixes:` origin next to unrelated work, or different `AI-Contribution` levels). Don't ask before splitting; state in the final output how many commits were created and why. If the changes are too entangled to separate cleanly, make one commit with the dominant type and trailers. Changes that would all carry the same trailers don't need splitting for tidiness.

@@ -7,7 +7,8 @@ description: Fast-forward merge the current worktree's branch into the main chec
 
 Land the work done in an EnterWorktree worktree: fast-forward the worktree's branch into the
 main checkout's branch, then delete the worktree and its branch. Run this from inside the
-worktree session (the one EnterWorktree switched you into).
+worktree session EnterWorktree switched you into: step 4's ExitWorktree acts only on a worktree
+created in the current session, so a session that was never in one has nothing to land.
 
 ## Steps
 
@@ -45,10 +46,10 @@ worktree session (the one EnterWorktree switched you into).
    git worktree remove <worktree-path>
    git branch -d <worktree-branch>
    ```
-   - ExitWorktree is not the tool for this any more — after step 4 it is a no-op for this worktree.
    - **`-d`, never `-D`.** `-d` refuses to delete a branch whose commits aren't merged, so it
      re-checks step 6 rather than trusting it.
-   - ExitWorktree releases the worktree's lock on the way out, so `remove` needs no `--force`.
+   - After step 4, ExitWorktree is a no-op here and has already released the lock, so `remove`
+     needs no `--force`.
 8. Verify cleanup: `git worktree list` (only the main entry remains), `git branch` (worktree branch
    gone), and `git status`.
 
@@ -57,6 +58,3 @@ worktree session (the one EnterWorktree switched you into).
 - **Detect branch names and paths from `git worktree list` / `git branch` — never hardcode
   `master` vs `main`.**
 - **Do not push.** Stop after the merge and cleanup.
-- Start this from inside the worktree session created by EnterWorktree: step 4's ExitWorktree only
-  acts on a worktree it created in the current session, so a session that was never in one has
-  nothing for this skill to land.

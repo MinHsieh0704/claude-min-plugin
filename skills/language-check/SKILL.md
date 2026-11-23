@@ -30,10 +30,7 @@ extension, never whether it "looks like documentation".
   non-UTF-8 code page Python's stdout raises `UnicodeEncodeError` and kills the run, while
   stderr silently degrades it to `\u26a0`. Surviving one code page is luck: `→` lives in cp950
   and dies in cp437. Symbols belong in the UI a repo renders, never in the stream it prints.
-- **CJK also reaches output through interpolation.** `print(f'the "{label}" column is empty')`
-  has no CJK on the line but prints Chinese whenever `label` binds to a Chinese display name.
-  No scan sees this; step 5 checks it by hand.
-
+- **CJK also reaches output through interpolation**, invisible to any scan; step 5 checks it.
 - Files a machine reads: `SKILL.md`, subagent definitions (`agents/<name>.md`), `CLAUDE.md`,
   `AGENTS.md`, manifests (`plugin.json`, `package.json`), hook configuration, and any string a
   hook injects into a model's context.
@@ -42,11 +39,9 @@ extension, never whether it "looks like documentation".
 
 ## Steps
 
-1. Enumerate what is in scope: `git ls-files`. Audit tracked files only. The locale matters, and
-   differently per step: the CJK-range greps (steps 2 and 6) need a UTF-8 locale, or `grep -P`
-   rejects the ranges and step 6's loop prints an empty table instead of failing; step 4 needs
-   `LC_ALL=C`, because a UTF-8 locale makes it skip bytes that are not valid UTF-8 (a Big5 or
-   cp950 file) and report that file clean. The commands below set each one explicitly.
+1. Enumerate what is in scope: `git ls-files`. Audit tracked files only. Keep each command's `LC_ALL`
+   prefix: without UTF-8, steps 2 and 6 reject the CJK ranges; with UTF-8, step 4 skips
+   non-UTF-8 (Big5, cp950) files and reports them clean.
 
 2. Split the files into "contains CJK" and "pure English":
 
@@ -61,11 +56,10 @@ extension, never whether it "looks like documentation".
 3. Build the scan set — every tracked text file except Markdown, which step 2 already covered:
 
    ```bash
-   TEXT=$(for f in $(git ls-files); do grep -qI . "$f" 2>/dev/null && echo "$f"; done | grep -v '\.md$')
+   TEXT=$(git ls-files | grep -v '\.md$' | xargs grep -lI . 2>/dev/null)
    ```
 
-   Select by "is text", never by extension: an extension list misses extensionless git hooks
-   and every language nobody listed.
+   Select by "is text" (`grep -I`), never by extension.
 
 4. **One net: every non-ASCII character on a line that is not a line-start comment.**
 
@@ -110,10 +104,8 @@ extension, never whether it "looks like documentation".
 6. Report per-file counts as `CJK lines / total lines`:
 
    ```bash
-   for f in $(git ls-files); do
-     n=$(LC_ALL=C.UTF-8 grep -cP '[\x{4e00}-\x{9fff}]' "$f") || true
-     [ "$n" -gt 0 ] && printf '%-56s %4s / %4s\n' "$f" "$n" "$(wc -l < "$f")"
-   done
+   git ls-files | LC_ALL=C.UTF-8 xargs grep -HcP '[\x{4e00}-\x{9fff}]' | grep -v ':0$' |
+     while IFS=: read -r f n; do printf '%-56s %4s / %4s\n' "$f" "$n" "$(wc -l < "$f")"; done
    ```
 
 7. Summarise in this order: the split (how many files each way), the per-file table, then the
