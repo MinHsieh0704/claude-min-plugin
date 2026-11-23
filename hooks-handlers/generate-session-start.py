@@ -6,7 +6,7 @@ generate-session-start.py — 從 SKILL.md 重新產生 session-start.sh 的 add
     python hooks-handlers/generate-session-start.py [<SKILL.md> <session-start.sh>]
 
 每個 ## 標題的正下一行必須是 <!-- summary: ... --> 或 <!-- no-summary -->，缺了就大聲停下，
-免得某一節安靜地從每個 session 消失。執行環境的前提見 .claude/CLAUDE.md 的 Verification。
+免得某一節安靜地從每個 session 消失。需要 Python 3，Windows 上用 python 而不是 python3（常是 Store 空殼）。
 handler 刻意維持靜態 heredoc：它每個 session 都跑，在那裡解析一旦失敗就是安靜地沒有準則。
 """
 
