@@ -11,22 +11,10 @@ trailer 慣例，統整「AI 對比人工」的 commit 歸屬。
     python3 ai_attribution_stats.py main..dev            # 指定範圍
     python3 ai_attribution_stats.py --path src/auth/     # 某路徑的功能演進時間軸
 
-它會回報什麼：
-  1. 整體 AI 與人工的 commit 數量，並依 AI-Contribution 程度細分。
-  2. fix 連結對照表：對每個帶有 Fixes: trailer 的 commit，判斷「原始 commit」
-     （Fixes: 所指向的那個）與「修正 commit」本身各自是 AI 還是人工撰寫。這回答了
-     「AI 主導的程式碼事後被人類修掉的頻率有多高」，而且不必倚賴自動化的 git
-     blame / SZZ 推論（團隊已決定不依賴那套 — 理由見
-     ../references/ai-attribution-proposal.md）。
-  3. 加上 --path 時：針對單一檔案或目錄，列出依時間排序的 AI-Contribution 時間軸
-     （透過 `git log --follow`），用來追蹤某個功能在非修正類更新中的演進 — 這是
-     刻意「不」引入新 trailer 的做法。為何更新類 commit 不另設專屬的連結 trailer，
-     見 ../references/ai-attribution-proposal.md 的相關章節。
-
-會印在輸出中、不掃到地毯下的但書：
-  - 完全倚賴 trailer 確實存在。採用本慣例之前所做的 commit 會被歸為 "untagged"。
-  - "Fixes: unknown" 代表作者在 commit 當下自行執行 git blame 的結果並不明確 —
-    這類 commit 會另外計數，不會被默默丟棄，也不會事後臆測補上。
+回報：整體 AI／人工 commit 數與 AI-Contribution 細分；fix 連結對照表（源頭與修正
+各自是 AI 還是人寫的）；加 --path 時改印該路徑的 AI-Contribution 時間軸。
+只看得到帶 trailer 的 commit，範圍外的 Fixes: 源頭計為 unresolved。
+為何不用 git blame / SZZ 自動推論，見 ../references/ai-attribution-proposal.md。
 """
 
 import re
@@ -39,10 +27,7 @@ FIELD_SEP = "\x1f"
 
 AI_TRAILER_RE = re.compile(r"^Co-Authored-By: Claude ", re.MULTILINE)
 LEVEL_RE = re.compile(r"^AI-Contribution: (assisted|generated)$", re.MULTILINE)
-# Fixes: 在單一 commit 中可能出現不只一次（一個 commit 確實可能修正多個先前的
-# 源頭，而且每個都各自有把握）— 所以用 findall 而非 search。"unknown" 與真實
-# sha 並存是自相矛盾的，往後 hook 會擋下這種寫法，但這支腳本仍要防禦較舊的歷史
-# 紀錄，或是早於／繞過該檢查的手動 commit — 見 main() 中的 "contradictory" 處理。
+# 一個 commit 可能修正多個源頭，Fixes: 會重複出現，所以用 findall。
 FIXES_RE = re.compile(r"^Fixes: (unknown|[0-9a-f]{7,40})$", re.MULTILINE)
 CANDIDATES_RE = re.compile(r"^Fixes-Candidates: (.+)$", re.MULTILINE)
 
@@ -118,17 +103,9 @@ def print_timeline(path, commits, order):
 
 
 def resolve_short_sha(short_sha, commits):
-    if short_sha == "unknown":
-        return None
+    # 只在已載入的範圍內找；範圍外的源頭不知道是 AI 還是人寫的，交給呼叫端計為 unresolved。
     matches = [h for h in commits if h.startswith(short_sha)]
-    if len(matches) == 1:
-        return matches[0]
-    # 不在已載入的範圍內（例如落在 rev_range 之外的較舊歷史）— 直接問 git。
-    try:
-        full = run_git(["rev-parse", short_sha]).strip()
-        return full if full in commits else None
-    except subprocess.CalledProcessError:
-        return None
+    return matches[0] if len(matches) == 1 else None
 
 
 def main():
@@ -182,27 +159,16 @@ def main():
     unknown = 0
     unknown_with_candidates = 0
     unresolved = 0
-    contradictory = 0
     fix_commits = [(h, c) for h, c in commits.items() if c["fixes"]]
     for h, c in fix_commits:
         fixer_is_ai = c["is_ai"]
-        confirmed_shas = [s for s in c["fixes"] if s != "unknown"]
-        has_unknown = "unknown" in c["fixes"]
-
-        if has_unknown and confirmed_shas:
-            # 自相矛盾的資料（unknown 與已確認的 sha 同時出現）照理說不可能發生
-            # — 往後 hook 會擋下 — 但修正前的歷史紀錄，或是繞過 hook 的手動
-            # commit 仍可能有。不要像「一律當成 unknown」那樣默默丟掉已確認的
-            # sha；照常處理它們，並把這個矛盾另外標記出來，讓它被看見，而不是往
-            # 任何一邊掃掉。
-            contradictory += 1
-        elif has_unknown:
+        # unknown 與確定的 sha 並存（hook 會擋，只有 --no-verify 進得來）時兩邊都照算，不丟資料。
+        if "unknown" in c["fixes"]:
             unknown += 1
             if c["candidates"]:
                 unknown_with_candidates += 1
-            continue
 
-        for sha in confirmed_shas:
+        for sha in (s for s in c["fixes"] if s != "unknown"):
             origin_hash = resolve_short_sha(sha, commits)
             if origin_hash is None:
                 unresolved += 1
@@ -229,11 +195,6 @@ def main():
         print(f"    of which {unknown_with_candidates} recorded Fixes-Candidates for manual triage")
     if unresolved:
         print(f"  Fixes: <sha> pointing outside loaded range/not found: {unresolved}")
-    if contradictory:
-        print(f"  WARNING: {contradictory} commit(s) had 'Fixes: unknown' AND a confirmed sha")
-        print("    together - contradictory data the hook now blocks going forward, but")
-        print("    these predate that check (or bypassed it). Confirmed shas were still")
-        print("    counted above rather than silently dropped; worth a manual look.")
 
     print()
     print("Note: this table only reflects commits that carry the trailer convention.")
